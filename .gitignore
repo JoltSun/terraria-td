@@ -1,0 +1,13 @@
+# Backups made before edits (Git keeps history now)
+*.bak
+*.bak[0-9]
+
+# Old zipped copy of the project
+*.zip
+
+# Python cache
+__pycache__/
+*.pyc
+
+# macOS / editor clutter
+.DS_Store

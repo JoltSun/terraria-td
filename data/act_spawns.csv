@@ -1,0 +1,315 @@
+biome,act,waves,difficulty,enemy,count,is_boss_entry
+Forest,1,10,Journey,Green Slime,72,0
+Forest,1,10,Journey,Blue Slime,51,0
+Forest,1,10,Journey,Purple Slime,7,0
+Forest,1,10,Journey,Pinky,6,0
+Forest,1,10,Classic,Green Slime,84,0
+Forest,1,10,Classic,Blue Slime,74,0
+Forest,1,10,Classic,Purple Slime,11,0
+Forest,1,10,Classic,Pinky,9,0
+Forest,1,10,Expert,Blue Slime,82,0
+Forest,1,10,Expert,Purple Slime,75,0
+Forest,1,10,Expert,Green Slime,61,0
+Forest,1,10,Expert,Pinky,19,0
+Forest,1,10,Expert,Golden Slime,6,0
+Forest,1,10,Master,Green Slime,84,0
+Forest,1,10,Master,Purple Slime,32,0
+Forest,1,10,Master,Pinky,21,0
+Forest,1,10,Master,Golden Slime,10,0
+Forest,1,10,Master,Blue Slime,4,0
+Forest,2,10,Journey,Green Slime,93,0
+Forest,2,10,Journey,Purple Slime,32,0
+Forest,2,10,Journey,Blue Slime,30,0
+Forest,2,10,Journey,Pinky,10,0
+Forest,2,10,Journey,Golden Slime,1,0
+Forest,2,10,Classic,Green Slime,74,0
+Forest,2,10,Classic,Purple Slime,65,0
+Forest,2,10,Classic,Blue Slime,61,0
+Forest,2,10,Classic,Pinky,17,0
+Forest,2,10,Classic,Golden Slime,3,0
+Forest,2,10,Expert,Green Slime,96,0
+Forest,2,10,Expert,Blue Slime,54,0
+Forest,2,10,Expert,Pinky,30,0
+Forest,2,10,Expert,Purple Slime,24,0
+Forest,2,10,Master,Green Slime,83,0
+Forest,2,10,Master,Blue Slime,46,0
+Forest,2,10,Master,Purple Slime,35,0
+Forest,2,10,Master,Pinky,34,0
+Forest,2,10,Master,Golden Slime,12,0
+Forest,3,10,Journey,Green Slime,81,0
+Forest,3,10,Journey,Blue Slime,68,0
+Forest,3,10,Journey,Purple Slime,35,0
+Forest,3,10,Journey,Spiked Slime,25,0
+Forest,3,10,Journey,Pinky,3,0
+Forest,3,10,Journey,King Slime,1,1
+Forest,3,10,Classic,Blue Slime,105,0
+Forest,3,10,Classic,Spiked Slime,53,0
+Forest,3,10,Classic,Green Slime,33,0
+Forest,3,10,Classic,Purple Slime,30,0
+Forest,3,10,Classic,Pinky,10,0
+Forest,3,10,Classic,Golden Slime,2,0
+Forest,3,10,Classic,King Slime,1,1
+Forest,3,10,Expert,Blue Slime,56,0
+Forest,3,10,Expert,Spiked Slime,53,0
+Forest,3,10,Expert,Green Slime,52,0
+Forest,3,10,Expert,Purple Slime,25,0
+Forest,3,10,Expert,Pinky,19,0
+Forest,3,10,Expert,Golden Slime,14,0
+Forest,3,10,Expert,King Slime,1,1
+Forest,3,10,Master,Spiked Slime,78,0
+Forest,3,10,Master,Green Slime,50,0
+Forest,3,10,Master,Blue Slime,33,0
+Forest,3,10,Master,Purple Slime,28,0
+Forest,3,10,Master,Golden Slime,27,0
+Forest,3,10,Master,Pinky,11,0
+Forest,3,10,Master,King Slime,1,1
+Forest,4,10,Journey,Demon Eye,84,0
+Forest,4,10,Journey,Zombie,64,0
+Forest,4,10,Journey,Maggot Zombie,26,0
+Forest,4,10,Journey,Dilated Eye,10,0
+Forest,4,10,Classic,Demon Eye,80,0
+Forest,4,10,Classic,Zombie,57,0
+Forest,4,10,Classic,Maggot Zombie,39,0
+Forest,4,10,Classic,Dilated Eye,24,0
+Forest,4,10,Expert,Demon Eye,53,0
+Forest,4,10,Expert,Maggot Zombie,50,0
+Forest,4,10,Expert,Dilated Eye,47,0
+Forest,4,10,Expert,Zombie,30,0
+Forest,4,10,Expert,Servant of Cthulhu,1,0
+Forest,4,10,Master,Maggot Zombie,54,0
+Forest,4,10,Master,Dilated Eye,49,0
+Forest,4,10,Master,Demon Eye,48,0
+Forest,4,10,Master,Zombie,30,0
+Forest,4,10,Master,Servant of Cthulhu,1,0
+Forest,5,8,Journey,Demon Eye,73,0
+Forest,5,8,Journey,Zombie,35,0
+Forest,5,8,Journey,Dilated Eye,18,0
+Forest,5,8,Journey,Maggot Zombie,5,0
+Forest,5,8,Classic,Demon Eye,77,0
+Forest,5,8,Classic,Zombie,35,0
+Forest,5,8,Classic,Dilated Eye,19,0
+Forest,5,8,Classic,Maggot Zombie,5,0
+Forest,5,8,Expert,Demon Eye,79,0
+Forest,5,8,Expert,Zombie,35,0
+Forest,5,8,Expert,Dilated Eye,20,0
+Forest,5,8,Expert,Maggot Zombie,5,0
+Forest,5,8,Master,Demon Eye,61,0
+Forest,5,8,Master,Dilated Eye,40,0
+Forest,5,8,Master,Maggot Zombie,23,0
+Forest,5,8,Master,Zombie,17,0
+Forest,5,8,Master,Servant of Cthulhu,4,0
+Forest,6,10,Journey,Servant of Cthulhu,91,0
+Forest,6,10,Journey,Demon Eye,47,0
+Forest,6,10,Journey,Dilated Eye,23,0
+Forest,6,10,Journey,Maggot Zombie,20,0
+Forest,6,10,Journey,Zombie,16,0
+Forest,6,10,Journey,Eye of Cthulhu,1,1
+Forest,6,10,Classic,Servant of Cthulhu,116,0
+Forest,6,10,Classic,Demon Eye,55,0
+Forest,6,10,Classic,Dilated Eye,33,0
+Forest,6,10,Classic,Maggot Zombie,24,0
+Forest,6,10,Classic,Zombie,8,0
+Forest,6,10,Classic,Eye of Cthulhu,1,1
+Forest,6,10,Expert,Servant of Cthulhu,160,0
+Forest,6,10,Expert,Demon Eye,67,0
+Forest,6,10,Expert,Dilated Eye,46,0
+Forest,6,10,Expert,Maggot Zombie,30,0
+Forest,6,10,Expert,Zombie,6,0
+Forest,6,10,Expert,Eye of Cthulhu,1,1
+Forest,6,10,Master,Servant of Cthulhu,173,0
+Forest,6,10,Master,Demon Eye,82,0
+Forest,6,10,Master,Dilated Eye,46,0
+Forest,6,10,Master,Maggot Zombie,23,0
+Forest,6,10,Master,Zombie,8,0
+Forest,6,10,Master,Eye of Cthulhu,1,1
+Desert,1,10,Journey,Sand Slime,84,0
+Desert,1,10,Journey,Antlion Larva,60,0
+Desert,1,10,Journey,Vulture,56,0
+Desert,1,10,Classic,Sand Slime,85,0
+Desert,1,10,Classic,Antlion Larva,72,0
+Desert,1,10,Classic,Vulture,70,0
+Desert,1,10,Expert,Sand Slime,86,0
+Desert,1,10,Expert,Antlion Larva,84,0
+Desert,1,10,Expert,Vulture,74,0
+Desert,1,10,Master,Sand Slime,93,0
+Desert,1,10,Master,Antlion Larva,85,0
+Desert,1,10,Master,Vulture,72,0
+Desert,2,9,Journey,Antlion Larva,73,0
+Desert,2,9,Journey,Vulture,38,0
+Desert,2,9,Journey,Sand Slime,29,0
+Desert,2,9,Journey,Tomb Crawler,20,0
+Desert,2,9,Classic,Antlion Larva,69,0
+Desert,2,9,Classic,Vulture,38,0
+Desert,2,9,Classic,Sand Slime,29,0
+Desert,2,9,Classic,Tomb Crawler,19,0
+Desert,2,9,Expert,Antlion Larva,74,0
+Desert,2,9,Expert,Vulture,36,0
+Desert,2,9,Expert,Sand Slime,29,0
+Desert,2,9,Expert,Tomb Crawler,17,0
+Desert,2,9,Master,Antlion Larva,84,0
+Desert,2,9,Master,Vulture,33,0
+Desert,2,9,Master,Sand Slime,29,0
+Desert,2,9,Master,Tomb Crawler,18,0
+Desert,3,10,Journey,Storm Hatchling,87,0
+Desert,3,10,Journey,Vulture,62,0
+Desert,3,10,Journey,Antlion Larva,40,0
+Desert,3,10,Journey,Angry Tumbler,10,0
+Desert,3,10,Journey,The Grand Thunder Bird,1,1
+Desert,3,10,Classic,Storm Hatchling,95,0
+Desert,3,10,Classic,Vulture,71,0
+Desert,3,10,Classic,Antlion Larva,45,0
+Desert,3,10,Classic,Angry Tumbler,10,0
+Desert,3,10,Classic,The Grand Thunder Bird,1,1
+Desert,3,10,Expert,Storm Hatchling,108,0
+Desert,3,10,Expert,Vulture,71,0
+Desert,3,10,Expert,Antlion Larva,45,0
+Desert,3,10,Expert,Angry Tumbler,10,0
+Desert,3,10,Expert,The Grand Thunder Bird,1,1
+Desert,3,10,Master,Storm Hatchling,110,0
+Desert,3,10,Master,Vulture,71,0
+Desert,3,10,Master,Antlion Larva,50,0
+Desert,3,10,Master,Angry Tumbler,10,0
+Desert,3,10,Master,The Grand Thunder Bird,1,1
+Desert,4,10,Journey,Antlion Larva,87,0
+Desert,4,10,Journey,Antlion Swarmer,45,0
+Desert,4,10,Journey,Sand Slime,36,0
+Desert,4,10,Journey,Antlion Charger,36,0
+Desert,4,10,Journey,Vulture,23,0
+Desert,4,10,Journey,Tomb Crawler,18,0
+Desert,4,10,Journey,Desert Nuisance,2,0
+Desert,4,10,Classic,Antlion Larva,91,0
+Desert,4,10,Classic,Antlion Swarmer,56,0
+Desert,4,10,Classic,Antlion Charger,42,0
+Desert,4,10,Classic,Sand Slime,38,0
+Desert,4,10,Classic,Vulture,30,0
+Desert,4,10,Classic,Tomb Crawler,20,0
+Desert,4,10,Classic,Desert Nuisance,2,0
+Desert,4,10,Expert,Antlion Larva,59,0
+Desert,4,10,Expert,Antlion Swarmer,54,0
+Desert,4,10,Expert,Antlion Charger,51,0
+Desert,4,10,Expert,Sand Slime,45,0
+Desert,4,10,Expert,Vulture,30,0
+Desert,4,10,Expert,Tomb Crawler,22,0
+Desert,4,10,Expert,Desert Nuisance,2,0
+Desert,4,10,Master,Antlion Swarmer,82,0
+Desert,4,10,Master,Antlion Larva,39,0
+Desert,4,10,Master,Antlion Charger,35,0
+Desert,4,10,Master,Vulture,30,0
+Desert,4,10,Master,Tomb Crawler,22,0
+Desert,4,10,Master,Sand Slime,21,0
+Desert,4,10,Master,Desert Nuisance,2,0
+Desert,5,10,Journey,Antlion Larva,150,0
+Desert,5,10,Journey,Antlion Charger,60,0
+Desert,5,10,Journey,Antlion Swarmer,47,0
+Desert,5,10,Journey,Vulture,33,0
+Desert,5,10,Journey,Sand Slime,30,0
+Desert,5,10,Journey,Tomb Crawler,13,0
+Desert,5,10,Journey,Desert Nuisance,1,1
+Desert,5,10,Journey,Desert Scourge,1,1
+Desert,5,10,Classic,Antlion Larva,165,0
+Desert,5,10,Classic,Antlion Charger,68,0
+Desert,5,10,Classic,Antlion Swarmer,44,0
+Desert,5,10,Classic,Sand Slime,35,0
+Desert,5,10,Classic,Vulture,33,0
+Desert,5,10,Classic,Tomb Crawler,13,0
+Desert,5,10,Classic,Desert Nuisance,1,1
+Desert,5,10,Classic,Desert Scourge,1,1
+Desert,5,10,Expert,Antlion Larva,170,0
+Desert,5,10,Expert,Antlion Charger,69,0
+Desert,5,10,Expert,Antlion Swarmer,44,0
+Desert,5,10,Expert,Sand Slime,38,0
+Desert,5,10,Expert,Vulture,32,0
+Desert,5,10,Expert,Tomb Crawler,14,0
+Desert,5,10,Expert,Desert Nuisance,1,1
+Desert,5,10,Expert,Desert Scourge,1,1
+Desert,5,10,Master,Antlion Larva,180,0
+Desert,5,10,Master,Antlion Charger,73,0
+Desert,5,10,Master,Antlion Swarmer,39,0
+Desert,5,10,Master,Sand Slime,38,0
+Desert,5,10,Master,Vulture,32,0
+Desert,5,10,Master,Tomb Crawler,14,0
+Desert,5,10,Master,Desert Nuisance,1,1
+Desert,5,10,Master,Desert Scourge,1,1
+Snow,1,10,Journey,Snow Flinx,84,0
+Snow,1,10,Journey,Ice Slime,84,0
+Snow,1,10,Journey,Frozen Zombie,34,0
+Snow,1,10,Classic,Ice Slime,91,0
+Snow,1,10,Classic,Snow Flinx,87,0
+Snow,1,10,Classic,Frozen Zombie,34,0
+Snow,1,10,Expert,Ice Slime,94,0
+Snow,1,10,Expert,Snow Flinx,92,0
+Snow,1,10,Expert,Frozen Zombie,36,0
+Snow,1,10,Master,Ice Slime,97,0
+Snow,1,10,Master,Snow Flinx,95,0
+Snow,1,10,Master,Frozen Zombie,38,0
+Snow,2,10,Journey,Spiked Ice Slime,75,0
+Snow,2,10,Journey,Cyan Beetle,40,0
+Snow,2,10,Journey,Ice Slime,39,0
+Snow,2,10,Journey,Snow Flinx,36,0
+Snow,2,10,Classic,Spiked Ice Slime,81,0
+Snow,2,10,Classic,Ice Slime,43,0
+Snow,2,10,Classic,Cyan Beetle,43,0
+Snow,2,10,Classic,Snow Flinx,40,0
+Snow,2,10,Expert,Spiked Ice Slime,84,0
+Snow,2,10,Expert,Ice Slime,44,0
+Snow,2,10,Expert,Cyan Beetle,43,0
+Snow,2,10,Expert,Snow Flinx,41,0
+Snow,2,10,Master,Spiked Ice Slime,110,0
+Snow,2,10,Master,Ice Slime,59,0
+Snow,2,10,Master,Cyan Beetle,57,0
+Snow,2,10,Master,Snow Flinx,55,0
+Snow,3,10,Journey,Ice Bat,80,0
+Snow,3,10,Journey,Snow Flinx,52,0
+Snow,3,10,Journey,Undead Viking,32,0
+Snow,3,10,Journey,Spiked Ice Slime,29,0
+Snow,3,10,Journey,Frozen Zombie,20,0
+Snow,3,10,Journey,Ice Slime,8,0
+Snow,3,10,Classic,Ice Bat,88,0
+Snow,3,10,Classic,Snow Flinx,56,0
+Snow,3,10,Classic,Undead Viking,32,0
+Snow,3,10,Classic,Spiked Ice Slime,31,0
+Snow,3,10,Classic,Frozen Zombie,20,0
+Snow,3,10,Classic,Ice Slime,8,0
+Snow,3,10,Expert,Ice Bat,89,0
+Snow,3,10,Expert,Snow Flinx,59,0
+Snow,3,10,Expert,Undead Viking,33,0
+Snow,3,10,Expert,Spiked Ice Slime,33,0
+Snow,3,10,Expert,Frozen Zombie,22,0
+Snow,3,10,Expert,Ice Slime,9,0
+Snow,3,10,Master,Ice Bat,94,0
+Snow,3,10,Master,Snow Flinx,59,0
+Snow,3,10,Master,Undead Viking,36,0
+Snow,3,10,Master,Spiked Ice Slime,33,0
+Snow,3,10,Master,Frozen Zombie,22,0
+Snow,3,10,Master,Ice Slime,9,0
+Snow,4,10,Journey,Ice Bat,53,0
+Snow,4,10,Journey,Snow Flinx,49,0
+Snow,4,10,Journey,Undead Viking,33,0
+Snow,4,10,Journey,Spiked Ice Slime,24,0
+Snow,4,10,Journey,Cyan Beetle,23,0
+Snow,4,10,Journey,Frozen Zombie,20,0
+Snow,4,10,Journey,Deerclops,1,1
+Snow,4,10,Classic,Ice Bat,53,0
+Snow,4,10,Classic,Snow Flinx,49,0
+Snow,4,10,Classic,Ice Slime,41,0
+Snow,4,10,Classic,Undead Viking,33,0
+Snow,4,10,Classic,Spiked Ice Slime,24,0
+Snow,4,10,Classic,Cyan Beetle,23,0
+Snow,4,10,Classic,Frozen Zombie,20,0
+Snow,4,10,Classic,Deerclops,1,1
+Snow,4,10,Expert,Ice Bat,53,0
+Snow,4,10,Expert,Snow Flinx,49,0
+Snow,4,10,Expert,Ice Slime,41,0
+Snow,4,10,Expert,Undead Viking,31,0
+Snow,4,10,Expert,Spiked Ice Slime,24,0
+Snow,4,10,Expert,Cyan Beetle,22,0
+Snow,4,10,Expert,Frozen Zombie,20,0
+Snow,4,10,Expert,Deerclops,1,1
+Snow,4,10,Master,Ice Bat,63,0
+Snow,4,10,Master,Snow Flinx,59,0
+Snow,4,10,Master,Ice Slime,49,0
+Snow,4,10,Master,Undead Viking,39,0
+Snow,4,10,Master,Spiked Ice Slime,29,0
+Snow,4,10,Master,Cyan Beetle,28,0
+Snow,4,10,Master,Frozen Zombie,24,0
+Snow,4,10,Master,Deerclops,1,1

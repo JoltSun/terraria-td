@@ -1,0 +1,22 @@
+file,name,column,value,note
+weapons,Wand of Sparking,RNG (mult),1.05,Verified in-game by Jolt (board says "1.05 RNG")
+weapons,Wand of Sparking,special,Inflict Burning for 5 seconds on the enemy,removed the ambiguous RNG line
+weapons,Mandible Blade,RNG (add),-3,Verified in-game by Jolt (board says "3 RNG")
+weapons,Mandible Blade,special,,removed the ambiguous RNG line
+units,Star Merchant,accessory_slots,3,Verified in-game by Jolt (missing on board)
+permanent_buffs,Heart Crystal,effect,"When consumed, apply a permanent +20 player max HP (15 limit)",Verified by Jolt (card missing on board)
+permanent_buffs,Heart Crystal,limit,15,Verified by Jolt
+units,Merchant,can_level,no,Economy unit - fixed at Lv 1 (Jolt)
+units,Star Merchant,can_level,no,Economy unit - fixed at Lv 1 (Jolt)
+unit_upgrades,Dye Trader#1,tier_cost,100,"In-game shows 100 (board says 125) - totals 250/500/1100 (Jolt screenshot)"
+armors,Pumpkin Helmet,set_bonus,Set Bonus: +20% Crit Damage (0/3),"In-game 20% per Jolt (board says 40%)"
+armors,Pumpkin Breastplate,set_bonus,Set Bonus: +20% Crit Damage (0/3),"In-game 20% per Jolt (board says 40%)"
+armors,Pumpkin Leggings,set_bonus,Set Bonus: +20% Crit Damage (0/3),"In-game 20% per Jolt (board says 40%)"
+accessories,Ice Skates,SPA (mult),0.85,"In-game 0.85x SPA (board says 0.9x) - Jolt"
+accessories,Ice Skates,RNG (add),-4,"In-game -4 RNG (not on board) - Jolt"
+units,Zephyr Fish,def_mult,5,"Enemy defense reduces Zephyr Fish hits by 5x (10 DEF = -50 per hit) - Jolt"
+achievements,Great Angler#3,task,"2,000 fish","In-game: III = 2,000 fish (board says 8,000) - Jolt"
+achievements,Great Angler#4,task,"8,000 fish","In-game: IV = 8,000 fish, the cap (board says 80,000); 4 tiers = 8% Fish Luck - Jolt"
+achievements,Pack a Punch#4,task,"10,000,000,000 damage","Tier IV missing on board; 10B DMG, +1% RNG - Jolt"
+achievements,Pack a Punch#4,platinum,20,"Platinum ASSUMED from the 5/10/15/20/25 pattern - unverified"
+accessories,Zephyr's Grip,RNG (add),2,"In-game +2 RNG (board says +3, likely pre-nerf); verified on Snow Launcher stat screen: 25.2 RNG - Jolt"

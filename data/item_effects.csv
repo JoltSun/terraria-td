@@ -1,0 +1,171 @@
+item,category,stat,op,value
+Aglet,accessories,SPA,mult,0.98
+Climbing Claws,accessories,DMG,mult,1.02
+Step Stool,accessories,RNG,mult,1.02
+Lucky Horseshoe,accessories,Luck,mult,1.2
+Gold Crown,accessories,DMG,mult,1.05
+Hermes Boots,accessories,SPA,mult,0.95
+Royal Gel,accessories,Splash,mult,1.25
+Shield of Cthulhu,accessories,DMG,mult,1.04
+Shield of Cthulhu,accessories,RNG,mult,1.04
+Shield of Cthulhu,accessories,SPA,mult,0.96
+Cloud in a Bottle,accessories,Double Attack,pct,5.0
+Dunerider Boots,accessories,SPA,mult,0.93
+Sandstorm in a Bottle,accessories,Double Attack,pct,10.0
+Encumbering Stone,accessories,DMG,mult,1.12
+Encumbering Stone,accessories,SPA,add,1.0
+Ancient Chisel,accessories,DMG,mult,1.03
+Ancient Chisel,accessories,Luck,mult,1.25
+Ancient Chisel,accessories,SPA,mult,0.97
+Flying Carpet,accessories,DMG,mult,1.03
+Flying Carpet,accessories,RNG,mult,1.06
+Flying Carpet,accessories,SPA,mult,0.97
+Sand Cloak,accessories,Penetration,add,2.0
+Sand Cloak,accessories,RNG,mult,1.07
+Ice Skates,accessories,RNG,add,-4.0
+Ice Skates,accessories,SPA,mult,0.85
+Flurry Boots,accessories,SPA,mult,0.9
+Blizzard in a Bottle,accessories,Double Attack,pct,10.0
+Ice Mirror,accessories,Luck,mult,1.1
+Ice Mirror,accessories,RNG,mult,1.08
+Sailfish Boots,accessories,SPA,mult,0.95
+Shark Tooth Necklace,accessories,Penetration,add,4.0
+Money Trough,accessories,Mana,add,5.0
+Goggles,accessories,RNG,mult,1.04
+Sunglasses,accessories,RNG,mult,1.06
+Binoculars,accessories,RNG,mult,1.12
+Zephyr's Grip,accessories,DMG,mult,1.04
+Zephyr's Grip,accessories,Luck,mult,1.1
+Zephyr's Grip,accessories,RNG,add,2.0
+Ocean Crest,accessories,RNG,mult,1.05
+Ocean Crest,accessories,SPA,mult,0.97
+Platinum Crown,accessories,RNG,add,3.0
+Platinum Crown,accessories,SPA,mult,0.95
+Band of Regeneration,accessories,XP,add,0.15
+Balloon Pufferfish,accessories,Crit Chance,pct,10.0
+Frog Leg,accessories,Luck,mult,1.15
+Frog Leg,accessories,RNG,mult,1.05
+Diamond Ring,accessories,Luck,mult,1.3
+Diamond Ring,accessories,Mana,add,5.0
+Ammo Box,accessories,Placement Cost,mult,0.85
+Ammo Box,accessories,Upgrade Cost,mult,0.85
+Black Counterweight,accessories,DMG,mult,0.9
+Black Counterweight,accessories,Splash,add,2.0
+Wand of Sparking,weapons,RNG,mult,1.05
+Zombie Arm,weapons,DMG,mult,1.04
+Zombie Arm,weapons,RNG,mult,1.04
+Blood Rain Bow,weapons,DMG,mult,0.8
+Blood Rain Bow,weapons,RNG,mult,1.2
+Blood Rain Bow,weapons,SPA,mult,0.9
+Grave Buster,weapons,DMG,add,2.0
+Grave Buster,weapons,RNG,mult,1.08
+Grave Buster,weapons,SPA,mult,0.95
+Mandible Blade,weapons,DMG,mult,1.06
+Mandible Blade,weapons,RNG,add,-3.0
+Mandible Blade,weapons,SPA,mult,0.94
+Snake Charmer's Flute,weapons,RNG,mult,1.15
+Storm Spear,weapons,DMG,mult,0.5
+Storm Spear,weapons,RNG,mult,0.9
+Storm Spear,weapons,Splash,add,4.0
+Thunder Zapper,weapons,DMG,mult,0.5
+Thunder Zapper,weapons,MaxChain,add,2.0
+Thunder Zapper,weapons,Penetration,max,0.0
+Thunder Zapper,weapons,Preserve,add,0.85
+Thunder Zapper,weapons,SPA,add,2.0
+Thunder Zapper,weapons,Splash,max,0.0
+Sand Gun,weapons,DMG,mult,1.08
+Sand Gun,weapons,RNG,max,12.0
+Sand Gun,weapons,SPA,mult,0.92
+Ice Blade,weapons,DMG,mult,1.1
+Ice Blade,weapons,RNG,mult,1.1
+Snowball Cannon,weapons,DMG,add,2.0
+Snowball Cannon,weapons,RNG,mult,0.8
+Snowball Cannon,weapons,SPA,mult,0.9
+Lucy the Axe,weapons,SPA,mult,0.9
+Pew-matic Horn,weapons,DMG,mult,1.07
+Pew-matic Horn,weapons,DMG Range,pct,15.0
+Wooden Sword,weapons,DMG,mult,1.05
+Wooden Sword,weapons,RNG,mult,0.95
+Wooden Bow,weapons,DMG,mult,0.95
+Wooden Bow,weapons,RNG,mult,1.05
+Wooden Bow,weapons,SPA,mult,0.95
+Slime Spear,weapons,DMG,mult,0.95
+Slime Spear,weapons,RNG,add,3.0
+Cactus Sword,weapons,DMG,mult,1.07
+Cactus Sword,weapons,RNG,mult,1.04
+Cactus Sword,weapons,SPA,add,1.0
+Ice Daggerfish,weapons,DMG,mult,1.1
+Ice Daggerfish,weapons,Penetration,add,3.0
+Weather Pain,weapons,DMG,mult,0.88
+Weather Pain,weapons,Penetration,add,6.0
+Weather Pain,weapons,SPA,mult,0.95
+Spear,weapons,RNG,add,5.0
+Spear,weapons,SPA,mult,1.1
+Falcon Blade,weapons,DMG,add,3.0
+Falcon Blade,weapons,RNG,add,4.0
+Falcon Blade,weapons,SPA,mult,0.8
+Enchanted Sword,weapons,DMG,add,3.0
+Enchanted Sword,weapons,RNG,mult,1.1
+Arkhalis,weapons,RNG,mult,0.6
+Arkhalis,weapons,SPA,mult,0.8
+Glacier Fang,weapons,DMG,mult,0.8
+Glacier Fang,weapons,MaxChain,add,1.0
+Glacier Fang,weapons,Preserve,add,0.67
+Freeze Bomb,weapons,DMG,mult,1.15
+Freeze Bomb,weapons,SPA,mult,1.3
+Freeze Bomb,weapons,Splash,add,1.0
+Throwing Knife,weapons,DMG,mult,1.03
+Throwing Knife,weapons,RNG,mult,0.9
+Throwing Knife,weapons,SPA,mult,0.975
+Shuriken,weapons,DMG,add,1.0
+Bomb,weapons,DMG,mult,1.5
+Bomb,weapons,SPA,mult,1.25
+Bomb,weapons,Splash,add,3.0
+Katana,weapons,Penetration,add,5.0
+Copper Shortsword,weapons,DMG,mult,1.1
+Copper Shortsword,weapons,RNG,mult,1.1
+Copper Shortsword,weapons,SPA,mult,0.9
+Copper Pickaxe,weapons,DMG,add,4.0
+Copper Pickaxe,weapons,RNG,add,6.0
+Copper Pickaxe,weapons,SPA,mult,0.9
+Rotten Egg,weapons,DMG,add,1.0
+Rotten Egg,weapons,Knockback,add,6.5
+Rotten Egg,weapons,Knockback Chance,pct,15.0
+Wood Helmet,armors,RNG,mult,1.02
+Umbrella Hat,armors,RNG,mult,1.05
+Rain Hat,armors,DMG,mult,1.02
+Top Hat,armors,DMG,mult,1.04
+Cactus Helmet,armors,DMG,mult,1.04
+Mining Helmet,armors,RNG,mult,1.1
+Pharoh's Mask,armors,DMG,add,1.0
+Pharoh's Mask,armors,RNG,add,1.0
+Ancient Storm Mask,armors,DMG,mult,1.08
+Pumpkin Helmet,armors,Crit Chance,pct,4.0
+Reaper Head,armors,DMG,mult,1.03
+Boreal Wood Helmet,armors,Penetration,add,1.0
+Boreal Wood Helmet,armors,SPA,mult,0.96
+Viking Helmet,armors,DMG,mult,1.06
+Viking Helmet,armors,RNG,mult,1.06
+Eyebrella,armors,RNG,mult,1.03
+Wood Breastplate,armors,DMG,mult,1.02
+Ninja Shirt,armors,SPA,mult,0.97
+Rain Coat,armors,DMG,mult,1.04
+Wedding Dress,armors,RNG,mult,1.05
+Cactus Breastplate,armors,DMG,mult,1.04
+Pharoh's Robe,armors,DMG,add,1.0
+Pharoh's Robe,armors,RNG,add,1.0
+Gi,armors,DMG,mult,1.04
+Gi,armors,SPA,mult,0.96
+Pumpkin Breastplate,armors,Crit Chance,pct,6.0
+Reaper Robe,armors,SPA,mult,0.97
+Boreal Wood Breastplate,armors,Penetration,add,2.0
+Boreal Wood Breastplate,armors,SPA,mult,0.96
+Flinx Fur Coat,armors,Placement Cost,mult,0.92
+Flinx Fur Coat,armors,RNG,add,2.0
+Flinx Fur Coat,armors,Upgrade Cost,mult,0.92
+Wood Greaves,armors,SPA,mult,0.98
+Ninja Pants,armors,SPA,mult,0.97
+Cactus Leggings,armors,DMG,mult,1.04
+Pumpkin Leggings,armors,Crit Chance,pct,2.0
+Boreal Wood Greaves,armors,Penetration,add,1.0
+Boreal Wood Greaves,armors,SPA,mult,0.96

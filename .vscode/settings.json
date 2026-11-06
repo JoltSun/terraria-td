@@ -1,0 +1,23 @@
+{
+  // Claude edits these files directly on disk. Making them read-only in VS Code
+  // stops an open editor tab from saving an old copy back over a fresh update.
+  // To edit one yourself: Command Palette -> "File: Toggle Active Editor Read-only in Session".
+  "files.readonlyInclude": {
+    "**/*.js": true,
+    "**/*.mjs": true,
+    "**/*.html": true,
+    "**/*.css": true,
+    "data/**": true,
+    "tools/parse_trello.py": true,
+    "tools/fetch_icons.py": true
+  },
+  // These two stay editable: they're yours to tweak.
+  "files.readonlyExclude": {
+    "data/enemy_tags.csv": true,
+    "tools/overrides.csv": true
+  },
+  "files.autoSave": "off",
+  "files.hotExit": "off",
+  // Don't make Live Server reload while files are being written in bulk
+  "liveServer.settings.wait": 300
+}

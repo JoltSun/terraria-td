@@ -1,0 +1,10 @@
+name,effect,limit,consumed,obtain,trello_url,override_notes
+Mana Crystal,"When consumed, apply a permanent 0.4/s passive mana production (10 limit)",10,,Crafting with 5 Fallen Star(s) (Workbench required) | A chance to drop from Golden Crate (15%) | A Milestones reward from killing 500 Spiked Slime(s),https://trello.com/c/X2fQdEw7,
+Advanced Combat Technique,"When consumed, apply a permanent +10% DMG to your units (1 limit)",1,,An very rare chance to be fished up with fishing poles during Blood Moon,https://trello.com/c/iXZXUilA,
+Plant Fiber Guide,"When consumed, apply a permanent +1 RNG to your units (1 limit)",1,,A reward from reaching Wave 100 in Forest Act+,https://trello.com/c/T7mF8mIm,
+DPS Meter,Show the DPS of their attack against an enemy in the unit menu during the match.,,,A chance to be bought from Traveling Merchant for 80 Platinum(s).,https://trello.com/c/qk9Pn4Sc,
+Lifeform Analyzer,Provide a permanent buff upon being consumed. Making weather-exclusive enemy spawned more often and having an alarm telling the player that those enemy were spawned.,,,A chance to be bought from Traveling Merchant for 200 Platinum(s).,https://trello.com/c/BElncS45,
+Cooked Fish,"Feed to a unit, apply a permanent +3% Unit XP (10 max)",,,Crafting with 2 Bass(s) / 2 Flounder(s) (Cooking Pot required),https://trello.com/c/ANVSZLCX,
+Seafood Dinner,"When consumed, apply a permanent +0.05% DMG to your units (400 limit)",400,,"Crafting with 2 Damselfish(s), and Salmon / Rock Lobster (Cooking Pot required)",https://trello.com/c/vyumT8Cx,
+Campfire,"When consumed, apply a permanent +1 Penetration to your units (1 limit)",1,,A reward from reaching Wave 100 in Snow Act+,https://trello.com/c/0SfMcN7I,
+Heart Crystal,"When consumed, apply a permanent +20 player max HP (15 limit)",15,,,,Verified by Jolt (card missing on board) | Verified by Jolt

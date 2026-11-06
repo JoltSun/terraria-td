@@ -1,0 +1,41 @@
+name,slime,zombie,flying,boss,time,weather,source
+Green Slime,1,0,0,0,day,,Jolt
+Blue Slime,1,0,0,0,day,,Jolt
+Purple Slime,1,0,0,0,day,,Jolt
+Pinky,1,0,0,0,day,,Jolt
+Umbrella Slime,1,0,0,0,day,rain,Jolt
+Flying Fish,0,0,1,0,both,rain,Jolt
+Golden Slime,1,0,0,0,day,,Jolt
+Spiked Slime,1,0,0,0,day,,Jolt
+King Slime,1,0,0,1,day,,Jolt
+Zombie,0,1,0,0,night,,Jolt
+Maggot Zombie,0,1,0,0,night,,Jolt
+Raincoat Zombie,0,1,0,0,night,rain,Jolt
+Demon Eye,0,0,1,0,night,,Jolt
+Dilated Eye,0,0,1,0,night,,Jolt
+Servant of Cthulhu,0,0,1,0,night,,Jolt
+Eye of Cthulhu,0,0,1,1,night,,Jolt
+Blood Zombie,0,1,0,0,night,,Jolt
+Drippler,0,0,1,0,night,,Jolt
+The Groom,0,1,0,0,night,,Jolt
+The Bride,0,1,0,0,night,,Jolt
+Zombie Merman,0,1,0,0,night,,Jolt
+Wandering Eye Fish,0,0,1,0,night,,Jolt
+Famished Maggot,0,0,0,0,night,,Jolt
+Bursting Maggot,0,0,0,0,night,,Jolt
+Patchwerk,0,1,0,1,night,,Jolt
+Sand Slime,1,0,0,0,both,,Jolt
+Vulture,0,0,1,0,both,,Jolt
+Storm Hatchling,0,0,1,0,both,,Jolt
+The Grand Thunder Bird,0,0,1,1,both,,Jolt
+Desert Scourge,0,0,0,1,both,,Jolt
+Ice Slime,1,0,0,0,both,,Jolt
+Slush Slime,1,0,0,0,both,,Jolt
+Spiked Ice Slime,1,0,0,0,both,,Jolt
+Frozen Zombie,0,1,0,0,both,,Jolt
+Ice Bat,0,0,1,0,both,,Jolt
+Deerclops,0,0,0,1,both,,Jolt
+Bunny Slime,1,0,0,0,both,,Jolt
+Costumed  Zombies,0,1,0,0,both,,Jolt
+Costumed Demon Eyes,0,0,1,0,both,,Jolt
+Raven,0,0,1,0,both,,Jolt

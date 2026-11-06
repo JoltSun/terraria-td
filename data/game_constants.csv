@@ -1,0 +1,43 @@
+constant,value,note
+player_base_hp,100,Player HP (damage taken from leaking enemies before losing) - not tower HP
+base_starting_mana,200,New account with no buffs
+max_starting_mana_observed,324,"Verified: (200+100 flat banners) x 1.02 x 1.02 (banners) x 1.02 x 1.02 (Topped Off I+II) = 324.7 -> 324"
+mana_pct_banner_value,0.02,"Vulture & Albino Antlion: 2% each, as board says (earlier 4% guess was wrong - missing factor was Topped Off achievement)"
+unit_max_level,45,
+level_dmg_per_level_1_25,0.02,Additive: LevelMult = 1 + 0.02*min(L,25) + 0.01*max(L-25,0)
+level_dmg_per_level_26_45,0.01,Level 1 = 1.02x; Level 45 = 1.70x
+defense_rule,max(DMG - DEF; 1),From 'About - Enemies' card: hits below DEF deal 1
+max_player_hp_observed,440,"Verified in-game: 100 base + 15 Heart Crystals x 20 + Purple Slime & Antlion banners (+20 each) - flat HP sources add together"
+dps_formula,DMG/SPA x (1+crit) x (1+double_attack),"Verified vs in-game DPS bars (Slime Prince, 4 tiers). Double Attack chances ADD (2x10% = +20%); crit = 2x dmg. Splash not counted"
+gear_stacking,multiplicative,"Verified: Slime Prince gear SPA 0.96x0.96x0.9x0.8 = 0.664 (shown 0.66); DMG 1.08x1.04x1.1x1.35 = 1.668 (shown 1.66)"
+banner_stacking,multiplicative,"Storm Hatchling -2% SPA: 0.664 x 0.98 = 0.650 matches in-game SPA on all 4 tiers"
+reforge_in_gear_bonuses,yes,Reforge multiplier (e.g. Legendary 1.35x DMG 0.8x SPA) is included in the Gear bonuses panel
+dmg_stacking,ALL multiplicative,"Verified on 9 data points (Slime Prince x4 tiers, Star Merchant x5 tiers): DMG = base x LevelMult x each gear item x reforge x (1+0.0005*seafood) x 1.10 ACT x 1.02 Sand Slime x 1.05 Boss Slayer achievement (5 tiers x 1%, tiers ADD)"
+display_rounding,truncate to 1 decimal,"In-game stat screen truncates (e.g. 1454.498 shown as 1454.4; gear 1.668 shown 1.66)"
+seafood_dinner_value,0.0005 per dinner,Board value confirmed (193 dinners = 1.0965x)
+boss_slayer_achievement,0.01 per tier (5 tiers),"Global DMG; tiers add (1.05 not 1.01^5 - verified by Star Merchant 1454.4)"
+topped_off_achievement,1.02x mana per tier (2 tiers),"Global mana; from consuming 10/15 Heart Crystals"
+stat_screen_conditionals,excluded,"Ice Bat (night) and Undead Viking (bosses) do NOT change the stat screen - verified"
+economy_units_level,fixed at 1 (1.02x),"Only Merchant and Star Merchant are economy units and cannot level up; all other units can (max 45) - Jolt"
+penetration_rule,ignore N enemy defense,"1 Penetration = ignore 1 enemy DEF (Jolt). EffDEF = max(DEF - Pen, 0)"
+whip_flat_dmg,added after multipliers,"Leather Whip +2 / Cobwhip +1 added after all DMG multipliers, BEFORE defense (Jolt)"
+crit_order,before defense,"Crit doubles DMG, then defense applies: hit = max(2*DMG - EffDEF, 1) (Jolt)"
+min_damage_floor,1 (+1 with Desert Scourge banner = 2),"hit = max(DMG*(2 if crit) + whip - max(DEF - Pen,0), floor)"
+crit_doubles_whip,TBD,"Unknown: (2*DMG)+whip vs 2*(DMG+whip). Default to (2*DMG)+whip until tested"
+rng_formula,base x gear x achievements x banners + flat,"Verified (Slime Prince 4 tiers, Wandering Eye Fish on/off): RNG = base x 1.10 Copper x 1.03 Pack a Punch III x 1.02 Wandering Eye Fish + 1 Plant Fiber Guide; flat added after multipliers"
+rng_minimum,1,"Hard in-game floor after all modifiers; Zoologist remains at 1 RNG even with multiple RNG-reducing items (Jolt)"
+flat_dmg_gear,added after ALL multipliers,"Verified: Enchanted Sword +3 DMG on Slime Prince - 5x3.3299+3=19.6 shown (vs 26.6 if before); 4 tiers match. Same rule as whips and flat RNG"
+spa_stacking,ALL multiplicative,"Verified: Dye Trader Flurry Boots on/off - every tier changes by exactly x0.9 (0.578->0.520, 0.462->0.416, 0.289->0.260)"
+splash_rule,radius; full DMG to every enemy in radius,"Each enemy in splash radius takes the full hit, with its own defense applied per enemy (Jolt)"
+globe_rule,AoE centered on the TOWER (radius = Globe),"Hits every enemy within Globe radius of the tower each attack; Splash = radius centered on the projectile impact (Jolt)"
+globe_trigger,enemy within RNG,"Globe attack fires only when an enemy is in RNG; if RNG > Globe, an enemy between the two triggers an attack that may hit nothing (Jolt)"
+flat_spa,added after multipliers,"Verified: Encumbering Stone +1 SPA on Dye Trader 0.52->1.52 (not 1.04); same flat-last rule as DMG/RNG"
+chain_rule,hit k = DMG x Preserve^(k-1); up to Max Chain enemies,"Total per attack = DMG x (1 - p^N)/(1 - p). Golfer: 3 chains @ 75% = 2.3125x (Jolt). Defense applied separately to each chain hit (Jolt)"
+chain_weapons,MaxChain adds; Preserve = min(unit + weapon; 1.0) (confirmed additive),"Thunder Zapper (+2 chain, 0.85) / Glacier Fang (+1 chain, 0.67): on non-chain units preserve becomes weapon value; on Golfer preserve becomes 100% at every tier (Jolt). Additive, capped at 100% (Jolt)"
+pellets_rule,listed DMG = all pellets hit; per pellet = DMG / Pellets,"Houndius Shootius: wide spread - ~1 pellet at long range, 1-2 mid, all 3 close (Closest targeting near spawn) (Jolt). Defense applies per pellet (Jolt)"
+percent_dmg_rule,normal hit + min(pct x enemy MaxHP; 100),"Digtoise / Flinx: extra damage = Percent% of enemy MAX HP, capped at 100 per hit, on top of normal attack (Jolt). % part IGNORES defense (Jolt). NOT scaled by level, gear, Seafood or any DMG multiplier - raw % of max HP (Jolt)"
+crit_stacking,crit chance ADDS,"Pumpkin full set + Balloon Pufferfish = 22% crit chance + 20% crit dmg (Jolt). Crit dmg ADDS to the 2x multiplier: crit = (2 + bonus) x DMG, e.g. 2.2x (Jolt). In-game Pumpkin set = +20% (board says +40%)"
+double_attack_stacking,ADDS,"Blizzard + Sandstorm in a Bottle = 20% (Jolt; matches DPS bars)"
+slime_whip,all enemies count as slimes,"King Slime banner +10% then applies to every enemy (not doubled on real slimes) (Jolt)"
+unique_accessories,1 of each accessory per unit,"No duplicate accessories on one tower (Jolt); enforced in the build pickers and accessory ranking"
+zephyr_fish_defense,x5,"Each point of enemy DEF removes 5 damage from Zephyr Fish hits (Jolt). Penetration/banner ignores apply BEFORE the x5 - confirmed by Jolt"

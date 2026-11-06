@@ -1,0 +1,14 @@
+{
+ "forest": [
+  "backgrounds/forest_1.png",
+  "backgrounds/forest_2.gif"
+ ],
+ "desert": [
+  "backgrounds/desert_1.gif",
+  "backgrounds/desert_2.png"
+ ],
+ "snow": [
+  "backgrounds/snow_1.png",
+  "backgrounds/snow_2.png"
+ ]
+}
