@@ -330,11 +330,12 @@ header .sub { color: #fff; }
 
 /* ---------- fantasy slot roles + per-card band ---------- */
 .fxRoles { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
-.fxRoleGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 300px)); gap: 10px 12px; }   /* 3 + 2 */
+.fxRoleGrid { display: grid; grid-template-columns: repeat(3, max-content); gap: 10px 12px; }   /* 3 + 2; cards hug their content */
 @media (max-width: 760px) { .fxRoleGrid { grid-template-columns: 1fr; } }
 .fxRole { display: flex; align-items: center; gap: 8px; background: var(--input); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: .85rem; min-width: 0; }
 .fxRole > span:first-child { font-weight: 700; min-width: 4.6em; }
-.fxRole input { width: 6em; flex: 0 0 6em; padding: 5px 6px; }
+.fxRole input { width: 3.6em; flex: 0 0 3.6em; padding: 5px 4px; text-align: center; -moz-appearance: textfield; }   /* 2 digits */
+.fxRole input::-webkit-outer-spin-button, .fxRole input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .fxCardBand input { width: 4.8em; flex: 0 0 4.8em; padding: 4px 6px; }
 .fxRole.locked { opacity: .75; }
 .fxCardBand { display: flex; align-items: center; gap: 4px; font-size: .85rem; }
@@ -470,3 +471,7 @@ header .sub { color: #fff; }
 @media (max-width: 640px) { .acctFeature { grid-template-columns: 1fr; } }
 
 .bannerCredit { margin: .6rem 0 0; font-size: .75rem; text-align: right; opacity: .8; }
+
+/* keep a label on one line on wide screens; let it wrap on phones so it never runs off-screen */
+.oneLine { white-space: nowrap; }
+@media (max-width: 760px) { .oneLine { white-space: normal; } }
