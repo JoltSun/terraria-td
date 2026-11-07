@@ -115,7 +115,7 @@
         <div class="row" style="margin-top:4px">
           <input id="exclInput" list="allItems" type="text" placeholder="Type an item name…">
           <datalist id="allItems"></datalist>
-          <button id="exclAdd" class="ghost">Exclude</button>
+          <button id="exclAdd" class="danger">Exclude</button>
         </div>
       </label>
       <div id="exclChips" class="chips"></div>
@@ -126,7 +126,7 @@
 
   <!-- ============ TEAM ============ -->
   <section class="card wide" id="teamCard">
-    <h2>Team &amp; Defense</h2>
+    <h2>Team Builder</h2>
     <p class="muted">5 tower slots. "Set from Build" copies the Build panel into a slot; "Edit" loads a slot back into the Build panel.
       Each slot has its own upgrade tier and number of placements. Merchant and Star Merchant are treated as economy/support and excluded from combat DPS.</p>
     <div class="loadoutBar">
@@ -187,7 +187,7 @@
       </div>
     </div>
     <h3>Team in this act</h3>
-    <p class="muted">Attacking towers from Team &amp; Defense at their selected upgrade levels and placement counts.</p>
+    <p class="muted">Attacking towers from Team Builder at their selected upgrade levels and placement counts.</p>
     <table id="buildsTable" class="tbl"></table>
   </section>
 
@@ -244,7 +244,7 @@
     <div class="grid3" style="margin-top:10px">
       <div>
         <label>Items I don't own <span class="muted">(shared with the Build optimizer)</span>
-          <div class="row" style="margin-top:4px"><input id="fxExclInput" list="allItems" type="text" placeholder="Type an item name…"><button id="fxExclAdd" class="ghost">Exclude</button></div>
+          <div class="row" style="margin-top:4px"><input id="fxExclInput" list="allItems" type="text" placeholder="Type an item name…"><button id="fxExclAdd" class="danger">Exclude</button></div>
         </label>
         <div id="fxExclChips" class="chips"></div>
       </div>

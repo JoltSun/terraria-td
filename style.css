@@ -96,6 +96,9 @@ h1 img.hico { width: 1.5em; height: 1.5em; }
 .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--input); border: 1px solid var(--line); border-radius: 999px; padding: 3px 4px 3px 8px; font-size: .8rem; }
 .chip img { width: 18px; height: 18px; image-rendering: pixelated; object-fit: contain; }
 .chip button { background: transparent; color: var(--muted); border: 0; padding: 0 6px; font-size: 1rem; line-height: 1; cursor: pointer; }
+/* excluded-item chips: the × removes the exclusion, styled like the red Clear/danger buttons */
+#exclChips .chip button, #fxExclChips .chip button { background: linear-gradient(#a83f52, #762b42); color: #fff;
+  border: 1px solid #47172b; border-radius: 999px; box-shadow: inset 0 0 0 1px #d66a78; }
 
 #planCard .tbl td.left { text-align: left; }
 
@@ -361,7 +364,11 @@ header .sub { color: #fff; }
 
 /* ---------- towers ranked ---------- */
 .tblWrap { overflow-x: auto; margin-top: 10px; }
-#compareCard .tblWrap { background: rgba(11,15,51,.35); }
+/* darker table panels: Compare Towers, Act Analysis, Mana Planner share one shade */
+:root { --tbl-shade: rgba(11,15,51,.35); }
+#compareCard .tblWrap,
+#actCard .tbl,
+#planCard .tbl { background: var(--tbl-shade); }
 .rankTbl th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
 .rankTbl th.sortable:hover, .rankTbl th.on { color: var(--accent); }
 .rankTbl td.on { color: var(--accent); font-weight: 700; }

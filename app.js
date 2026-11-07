@@ -673,7 +673,7 @@ function renderAct(b, f) {
   $('actStats').innerHTML =
     (members.length
       ? tile('Team Act DPS', fmt(teamDps), `${members.length} towers · ${members.reduce((t, m) => t + m.t.placements, 0)} placements`, true)
-      : tile('Team Act DPS', '—', 'Add attacking towers in Team & Defense', true)) +
+      : tile('Team Act DPS', '—', 'Add attacking towers in Team Builder', true)) +
     tile('Avg DEF', fmt(avgDef, 1), 'per enemy') +
     tile('Enemies', `${fmt(n, 0)}${mix.some((m) => m.boss) ? '+' : ''}`, mix.some((m) => m.boss) ? '+ boss minions' : '');
 
@@ -684,7 +684,7 @@ function renderAct(b, f) {
   $('buildsTable').innerHTML = members.length
     ? '<tr><th>Tower</th><th>Upgrade</th><th>Placements</th><th>Total DPS</th><th>% of team</th></tr>' +
       members.map((m) => `<tr><td>${ico('units', m.b.unit)}${m.b.unit}</td><td>${m.t.tier}/${D.upgrades[m.b.unit].length - 1}</td><td>${m.t.placements}</td><td>${fmt(m.total)}</td><td>${fmt(teamDps ? m.total / teamDps * 100 : 0, 0)}%</td></tr>`).join('')
-    : '<tr><td class="muted" style="text-align:left">No attacking towers in Team & Defense yet.</td></tr>';
+    : '<tr><td class="muted" style="text-align:left">No attacking towers in Team Builder yet.</td></tr>';
 
   // accessory ranking: pick a Team tower (by name), then swap every accessory into one of its slots
   const rb = rankTarget(b);
@@ -1728,11 +1728,11 @@ function renderPlan(f) {
 // ---------- sidebar navigation: one view at a time ----------
 const VIEWS = [
   { id: 'build', label: 'Build', sections: ['build', 'fight', 'results', 'optCard'], icon: ['weapons', 'Copper Shortsword'] },
-  { id: 'team', label: 'Team & Defense', sections: ['teamCard'], icon: ['units', 'Guide'] },
-  { id: 'compare', label: 'Compare Towers', sections: ['compareCard'], icon: ['consumables', 'Golden Crate'] },
+  { id: 'team', label: 'Team Builder', sections: ['teamCard'], icon: ['units', 'Guide'] },
   { id: 'fantasy', label: 'Fantasy Teams', sections: ['fantasyCard'], icon: ['accessories', 'Gold Crown'] },
   { id: 'act', label: 'Act Analysis', sections: ['actCard'], icon: ['enemies', 'Eye of Cthulhu'] },
   { id: 'plan', label: 'Mana Planner', sections: ['planCard'], icon: ['consumables', 'Mana Crystal'] },
+  { id: 'compare', label: 'Compare Towers', sections: ['compareCard'], icon: ['consumables', 'Golden Crate'] },
   { id: 'acct', label: 'Account Buffs', sections: ['acctCard', 'bannerCard'], icon: ['consumables', 'Seafood Dinner'] },
   { id: 'ach', label: 'Achievements', sections: ['achCard'], icon: ['accessories', 'Platinum Crown'] },
 ];
@@ -1750,7 +1750,7 @@ function buildNav() {
 }
 function showView(id) {
   if (id === 'rank') id = 'compare';   // Towers Ranked became Compare Towers
-  if (id === 'chart') id = 'team';     // Defense chart is now part of Team & Defense
+  if (id === 'chart') id = 'team';     // Defense chart is now part of Team Builder
   const v = VIEWS.find((x) => x.id === id) || VIEWS[0];
   const changed = activeViewId !== v.id;
   activeViewId = v.id;
