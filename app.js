@@ -1774,12 +1774,19 @@ function showView(id) {
 // ---------- biome background ----------
 // Layer 1: the picture for the picked act's biome. Layer 2: the dark-blue shade on top at 10%.
 const BG_SHADE = 0.10;
+// Per-act picks; any act not listed falls back to the biome list in backgrounds/manifest.json
+const ACT_BACKGROUNDS = {
+  'Forest Act 4': 'backgrounds/Forest_background_2_NIGHT.webp',
+  'Forest Act 5': 'backgrounds/Forest_background_16_NIGHT.webp',
+  'Forest Act 6': 'backgrounds/Forest_background_2_NIGHT.webp',
+};
 function applyBackground() {
   const parts = ($('act').value || 'Forest Act 1').split(' ');
   const biome = parts[0].toLowerCase(), act = Number(parts[2]) || 1;
   const list = BGS[biome] || BGS.forest || [];
   // Forest Acts 4-6 (and Blood Moon) are at night: use the 2nd forest picture there
-  const url = list[biome === 'forest' && act >= 4 && list[1] ? 1 : 0] || null;
+  const url = ACT_BACKGROUNDS[parts.slice(0, 3).join(' ')]
+    || list[biome === 'forest' && act >= 4 && list[1] ? 1 : 0] || null;
   document.body.style.setProperty('--bg-img', url ? `url("${encodeURI(url)}")` : 'none');
   document.body.style.setProperty('--bg-shade', url ? BG_SHADE : 1);
 }
