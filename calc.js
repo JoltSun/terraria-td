@@ -183,11 +183,10 @@ export function damagePerAttack(s, enemy, opts = {}) {
 }
 
 export function realDPS(s, enemy, opts) {
-  const dps = damagePerAttack(s, enemy, opts) * (1 + s.doubleAttack) / s.SPA;
-  // Lock-on units (Suspicious Eye) pause after each kill before shooting again:
-  // one kill takes H/dps seconds plus the delay. Negligible on bosses, brutal on small mobs.
-  const H = enemy.HP || 0;
-  return s.retargetDelay > 0 && H > 0 ? H / (H / dps + s.retargetDelay) : dps;
+  // Lock-on units (Suspicious Eye) wait 1 s after each kill, which only matters against small mobs.
+  // They're bossing towers, so they're scored like everyone else (whip + DEF + crits) with no pause;
+  // the UI tells players to use Strong targeting instead. (s.retargetDelay is kept for that notice.)
+  return damagePerAttack(s, enemy, opts) * (1 + s.doubleAttack) / s.SPA;
 }
 // Seconds a lock-on unit waits after a kill before it can fire again (Jolt, in-game)
 export const RETARGET_DELAY = { 'Suspicious Eye': 1 };

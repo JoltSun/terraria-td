@@ -47,12 +47,6 @@
       <label title="Only used by % max-HP units (Digtoise, Flinx). Enemy HP scales by wave, so enter what you see in-game.">Enemy max HP (for % dmg) <input id="hp" type="number" min="0" value="100"></label>
       <label title="Distinct enemies the tower can reach. Chain: max different enemies hit (1 = first hit only). Splash/Globe: enemies caught by the AoE. Other towers: no effect.">Enemies available <input id="targets" type="number" min="1" value="1"></label>
       <label title="Houndius: ~1 long range, 1–2 mid, all close">Pellets landing <input id="pellets" type="number" min="1" value="3"></label>
-      <label title="Lock-on units (Suspicious Eye) stay on one target until it dies, then pause 1s. Strong = it picks the tankiest enemy, so the pause rarely matters; First = it fights whatever is in front.">Lock-on targeting
-        <select id="fLockOn">
-          <option value="strong">Strong (tankiest enemy)</option>
-          <option value="first">First (whatever's in front)</option>
-        </select>
-      </label>
       <label title="Black Cat's Bad Luck debuff: enemies take crits more often (+crit chance for every tower). Your Team applies its own Black Cat automatically.">Bad Luck
         <select id="fBadLuck">
           <option value="0">None</option>

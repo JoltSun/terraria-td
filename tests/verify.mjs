@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { computeStats, screenDPS, damagePerAttack, trunc1, trunc2, DEFAULT_ACCOUNT } from '../calc.js';
+import { computeStats, screenDPS, damagePerAttack, realDPS, trunc1, trunc2, DEFAULT_ACCOUNT } from '../calc.js';
 import { parseCSV, indexData } from '../data.js';
 import { fxAssign, paretoOptions, bandKey } from '../fantasy-core.js';
 
@@ -138,6 +138,10 @@ check('Splash capped by clump', dpa({ Splash: 8 }, {}, { density: 0.375, clump: 
 check('Spawn camping, Splash 2 → 3.5', dpa({ Splash: 2 }, {}, { spawnCrowd: true }), 350);
 // % max-HP damage: ignores DEF, capped at 100
 check('% max-HP adds, capped 100', dpa({ percent: 10 }, { maxHP: 5000 }), 200);
+
+// Lock-on (Suspicious Eye) is a bossing tower: scored with whip + DEF + crits, no per-kill pause
+check('Lock-on: no kill pause vs small HP', realDPS({ ...base, doubleAttack: 0, retargetDelay: 1 }, { DEF: 0, maxHP: 100, HP: 100 }, {}), 100);
+check('Lock-on: whip and DEF still apply', realDPS({ ...base, doubleAttack: 0, retargetDelay: 1 }, { DEF: 20, maxHP: 100, HP: 100 }, { whip: 5 }), 85);
 
 // ---------- Fantasy Team brain: fxAssign (DP over filled slots × mana budget) ----------
 // synthetic towers: opt(dps, cost) is one tier/placement choice

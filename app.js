@@ -4,6 +4,8 @@ import { computeStats, screenDPS, realDPS, damagePerAttack, totalCost, trunc1, t
 import { bandKey, FX_OPT_SCORE, fxAssign } from './fantasy-core.js';
 
 const $ = (id) => document.getElementById(id);
+// Suspicious Eye (lock-on) is a bossing tower: its DPS assumes long fights, so no per-kill pause is modelled
+const LOCK_ON_NOTE = (delay = 1) => `🔒 <b>Bossing tower:</b> set its targeting to <b>Strong</b> in-game. It locks onto one enemy and waits ${delay}s after each kill before firing again, so its DPS here assumes long fights (bosses, tanky enemies). Against waves of small mobs, expect less.`;
 const store = {
   get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
@@ -406,7 +408,7 @@ function fightOpts() {
     // the HP box is also the target's HP for lock-on units' kill → re-target pauses
     enemy: { DEF: Number($('def').value) || 0, maxHP: Number($('hp').value) || 0, HP: Number($('hp').value) || 0 },
     opts: { whip: Number($('whip').value) || 0, targets: Number($('targets').value) || 1, pelletsHit: Number($('pellets').value) || 1,
-            badLuck: Number($('fBadLuck').value) || 0, lockTargeting: $('fLockOn').value },
+            badLuck: Number($('fBadLuck').value) || 0 },
     // Slime Whip makes every enemy count as a slime, so the King Slime banner applies to all of them
     fight: { night: $('fNight').checked, boss: $('fBoss').checked, slime: $('fSlime').checked || $('whip').value === 'slime', flying: $('fFlying').checked,
              zombie: $('fZombie').checked, slowed: $('fSlowed').checked, fullHp: $('fFullHp').checked },
@@ -541,7 +543,7 @@ function render() {
 
   // warnings
   const w = [];
-  if (s.retargetDelay) w.push(`🔒 Locks onto one target until it dies, then waits ${s.retargetDelay}s before firing again. Against a ${fmt(f.enemy.HP || 0, 0)} HP enemy that brings real DPS to ${fmt(dps)} (the stat screen ignores the pause; set the HP box to the enemy's HP).`);
+  if (s.retargetDelay) w.push(LOCK_ON_NOTE(s.retargetDelay));
   if (s.Globe && s.RNG > s.Globe + 1e-9) w.push(`⚠️ RNG (${trunc1(s.RNG)}) exceeds Globe (${s.Globe}) by ${fmt(s.RNG - s.Globe, 1)}: attacks can trigger on enemies outside the Globe and whiff.`);
   const effDef = Math.max(f.enemy.DEF - s.Pen - s.ignoreDef, 0) * (s.defMult || 1);
   if (s.DMG / (s.pellets || 1) + f.opts.whip - effDef <= s.floor) w.push(`⚠️ Normal hits are at the minimum-damage floor (${s.floor}) against this enemy.`);
@@ -594,22 +596,8 @@ function fightFor(name) {
            flying: !!t.flying, zombie: !!t.zombie, slowed: false, fullHp: false };
 }
 // Count-weighted average of your DPS against each enemy in the act.
-// Each enemy's bestiary max HP drives % max-HP damage (Digtoise, Flinx) and lock-on re-target pauses.
+// Each enemy's bestiary max HP drives % max-HP damage (Digtoise, Flinx).
 function actDPS(b, mix, f) {
-  // Lock-on units (Suspicious Eye): time-correct rate = HP killed ÷ (kill time + re-target pause per kill).
-  // "Strong" targeting picks the tankiest enemy on screen, so kills are weighted by HP (the trash dies to others).
-  const s0 = stats(b, {});
-  if (s0.retargetDelay > 0) {
-    const strong = (f.opts.lockTargeting || 'strong') === 'strong';
-    let hp = 0, time = 0;
-    for (const m of mix) {
-      if (!(m.HP > 0)) continue;
-      const raw = realDPS(stats(b, fightFor(m.name)), { DEF: m.DEF, maxHP: m.HP, HP: 0 }, f.opts);   // HP 0: no pause
-      const w = m.count * (strong ? m.HP : 1);
-      hp += w * m.HP; time += w * (m.HP / raw + s0.retargetDelay);
-    }
-    if (time > 0) return hp / time;
-  }
   let n = 0, tot = 0;
   for (const m of mix) {
     // each enemy's own max HP drives % max-HP damage (Digtoise, Flinx)
@@ -1131,7 +1119,7 @@ function cmpSpecials(u, s, tier) {
   if (s.confusion > 0) out.push(`Confusion ${fmt(s.confusion, 0)}s`);
   if (Number(row['Bad Luck'])) out.push(`Bad Luck +${row['Bad Luck']}% crit`);
   if (CMP_SLIMED[u] != null && tier >= CMP_SLIMED[u]) out.push('Slimed 4s');
-  if (s.retargetDelay > 0) out.push(`Lock-on (${s.retargetDelay}s re-target)`);
+  if (s.retargetDelay > 0) out.push(`<span title="${LOCK_ON_NOTE(s.retargetDelay).replace(/<[^>]+>/g, '')}">Lock-on: use Strong · ${s.retargetDelay}s per kill</span>`);
   if (INVERTED_RANGE_UNITS.has(u)) out.push('Reverse path');
   return out;
 }
