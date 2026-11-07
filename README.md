@@ -1,7 +1,13 @@
 # Terraria TD Calculator
 
+🌐 **Live site: [terrariatd.wiki](https://terrariatd.wiki)** · 🚧 *Work in progress — actively being updated.*
+
+> Unofficial fan project by **JoltSun**. Not affiliated with Re-Logic or the Terraria Tower Defense developers.
+> Base game data comes from the community [Terraria TD Remastered Trello board](https://trello.com/b/p9kIzWV6/terraria-td-remastered);
+> corrections from in-game testing live in `tools/overrides.csv`.
+
 Local calculator for Terraria Tower Defense Remastered: build a unit, pick an enemy, see real DPS.
-The damage model in `calc.js` is checked against real in-game stat screens (`node tests/verify.mjs`, 50 checks).
+The damage model in `calc.js` is checked against real in-game stat screens (`node tests/verify.mjs`).
 
 ## Run it
 Browsers won't load CSVs from a file opened straight off disk, so serve the folder:

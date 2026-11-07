@@ -243,3 +243,8 @@ header .sub { color: #fff; }
 .rankHow summary { cursor: pointer; color: var(--muted); font-size: .88rem; user-select: none; width: fit-content; }
 .rankHow summary:hover { color: var(--accent); }
 .rankHow[open] summary { color: var(--ink); margin-bottom: 4px; }
+
+/* ---------- site footer (fan-project disclaimer + credits) ---------- */
+.siteFooter { margin: 28px 0 12px; padding: 14px 4px 0; border-top: 1px solid var(--line); color: var(--muted);
+              font-size: .8rem; line-height: 1.5; text-align: center; }
+.siteFooter a { color: var(--accent); }
