@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 import { computeStats, screenDPS, damagePerAttack, realDPS, trunc1, trunc2, DEFAULT_ACCOUNT } from '../calc.js';
 import { parseCSV, indexData } from '../data.js';
 import { fxAssign, paretoOptions, bandKey } from '../fantasy-core.js';
+import * as S from '../state.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const load = (f) => parseCSV(readFileSync(join(root, 'data', f), 'utf8'));
@@ -192,6 +193,17 @@ const total = (out, k) => out.reduce((t, x) => t + (x ? x.o[k] : 0), 0);
 // paretoOptions keeps only options that beat every cheaper one
 check('paretoOptions: drops dominated', paretoOptions([opt(100, 50), opt(90, 80), opt(200, 120)]).length, 2);
 check('bandKey: null band', bandKey(null) === 'none' ? 1 : 0, 1);
+
+// ---------- state.js: shared state seen live by every module ----------
+// (Node has no localStorage, so this also checks the defaults when nothing is saved.)
+check('state: default team is 5 empty slots', S.team.length === 5 && S.team.every((t) => t === null) ? 1 : 0, 1);
+check('state: Copper Pickaxe excluded by default', S.excluded.includes('Copper Pickaxe') ? 1 : 0, 1);
+S.setTeam([{ build: { unit: 'Guide' } }, null, null, null, null]);
+check('state: setTeam is seen by importers', S.team[0]?.build.unit === 'Guide' ? 1 : 0, 1);
+S.setExcluded(['Ice Skates']);
+check('state: setExcluded is seen by importers', S.excluded.join() === 'Ice Skates' ? 1 : 0, 1);
+S.setData({ TAGS: { 'Demon Eye': { time: 'night' } } });
+check('state: setData updates only what it is given', S.TAGS['Demon Eye'] && S.D === null ? 1 : 0, 1);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

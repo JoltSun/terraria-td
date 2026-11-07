@@ -1,21 +1,14 @@
 import { loadAll, parseCSV } from './data.js';
 import { optimize, MODES } from './optimizer.js';
-import { computeStats, screenDPS, realDPS, damagePerAttack, totalCost, trunc1, trunc2, DEFAULT_ACCOUNT } from './calc.js';
+import { computeStats, screenDPS, realDPS, damagePerAttack, totalCost, trunc1, trunc2 } from './calc.js';
 import { bandKey, FX_OPT_SCORE, fxAssign } from './fantasy-core.js';
+import { store, D, ICONS, TAGS, SPAWNS, BGS, account, loadouts, team, excluded, setData, setTeam, setExcluded } from './state.js';
 
 const $ = (id) => document.getElementById(id);
 // Suspicious Eye (lock-on) is a bossing tower: its DPS assumes long fights, so no per-kill pause is modelled
 const LOCK_ON_NOTE = (delay = 1) => `🔒 <b>Bossing tower:</b> set its targeting to <b>Strong</b> in-game. It locks onto one enemy and waits ${delay}s after each kill before firing again, so its DPS here assumes long fights (bosses, tanky enemies). Against waves of small mobs, expect less.`;
-const store = {
-  get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
-};
-let D, ICONS = {}, TAGS = {}, SPAWNS = [], BGS = {}, account = { ...DEFAULT_ACCOUNT, ...store.get('ttd.account', {}) };
-let team = store.get('ttd.team', [null, null, null, null, null]);
-let loadouts = store.get('ttd.loadouts', {});
+// shared state (D, team, excluded, …) lives in state.js
 let repairedTeamDuplicates = [];
-// Items the optimizer must never pick. Copper Pickaxe starts excluded: it's currently unobtainable.
-let excluded = store.get('ttd.excluded', ['Copper Pickaxe']);
 // Items you can only own one of (badge rewards): Fantasy Teams gives each to at most one tower
 // Game rule: only one of these can exist per account, so at most one tower may wear each (always enforced)
 const ACCOUNT_UNIQUE = ['Copper Shortsword', 'Copper Pickaxe', 'Platinum Crown', 'Sand Gun', 'Grave Buster', 'Band of Regeneration'];
@@ -149,15 +142,15 @@ function updateReforgeShowcase(name = $('reforge').value || 'None') {
 };
 
 async function init() {
-  try { D = await loadAll(); }
+  try { setData({ D: await loadAll() }); }
   catch (e) { $('status').textContent = 'Could not load data/ — open this through Live Server or python -m http.server'; $('status').hidden = false; return; }
   const repaired = uniqueTeamSlots(team);
-  team = repaired.team; repairedTeamDuplicates = repaired.removed;
+  setTeam(repaired.team); repairedTeamDuplicates = repaired.removed;
   if (repairedTeamDuplicates.length) store.set('ttd.team', team);
-  try { TAGS = Object.fromEntries(parseCSV(await (await fetch('data/enemy_tags.csv')).text()).map((r) => [r.name, r])); } catch { TAGS = {}; }
-  try { SPAWNS = parseCSV(await (await fetch('data/act_spawns.csv')).text()); } catch { SPAWNS = []; }
-  try { BGS = await (await fetch('backgrounds/manifest.json')).json(); } catch { BGS = {}; }
-  try { ICONS = await (await fetch('icons/manifest.json')).json(); } catch { ICONS = {}; }
+  try { setData({ TAGS: Object.fromEntries(parseCSV(await (await fetch('data/enemy_tags.csv')).text()).map((r) => [r.name, r])) }); } catch { setData({ TAGS: {} }); }
+  try { setData({ SPAWNS: parseCSV(await (await fetch('data/act_spawns.csv')).text()) }); } catch { setData({ SPAWNS: [] }); }
+  try { setData({ BGS: await (await fetch('backgrounds/manifest.json')).json() }); } catch { setData({ BGS: {} }); }
+  try { setData({ ICONS: await (await fetch('icons/manifest.json')).json() }); } catch { setData({ ICONS: {} }); }
   headingIcons();
   buildNav();
   window.addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(render, 150); });
@@ -297,9 +290,9 @@ async function init() {
   $('exclInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addExcl(); });
   $('exclChips').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-un]'); if (!b) return;
-    excluded = excluded.filter((n) => n !== b.dataset.un); store.set('ttd.excluded', excluded); renderExcluded();
+    setExcluded(excluded.filter((n) => n !== b.dataset.un)); store.set('ttd.excluded', excluded); renderExcluded();
   });
-  wireItemList('fxExclInput', 'fxExclAdd', 'fxExclChips', () => excluded, (l) => { excluded = l; }, 'ttd.excluded');
+  wireItemList('fxExclInput', 'fxExclAdd', 'fxExclChips', () => excluded, (l) => { setExcluded(l); }, 'ttd.excluded');
   renderExcluded();
   $('optTable').addEventListener('click', applyOptimized);
   $('teamSlots').addEventListener('click', onTeamClick);
@@ -312,7 +305,7 @@ async function init() {
   $('loadLoadout').onclick = () => {
     const n = $('loadoutPick').value; if (!loadouts[n]) return;
     const repairedLoadout = uniqueTeamSlots(structuredClone(loadouts[n]));
-    team = repairedLoadout.team; loadouts[n] = structuredClone(team);
+    setTeam(repairedLoadout.team); loadouts[n] = structuredClone(team);
     $('loadoutName').value = n; store.set('ttd.team', team); store.set('ttd.loadouts', loadouts); render();
     showTeamNotice(repairedLoadout.removed.length
       ? `Removed duplicate ${repairedLoadout.removed.join(', ')} from this older loadout. Use each tower's Placements slider for additional copies.`
@@ -1076,7 +1069,7 @@ function renderFantasy() {
 function loadFantasy() {
   if (!fxLast?.length) return;
   if (team.some(Boolean) && !confirm('Replace your current Team with this fantasy team?')) return;
-  team = [0, 1, 2, 3, 4].map((i) => (fxLast[i] ? { build: { ...fxLast[i].build, acc: [...fxLast[i].build.acc] }, tier: fxLast[i].tier, placements: fxLast[i].placements } : null));
+  setTeam([0, 1, 2, 3, 4].map((i) => (fxLast[i] ? { build: { ...fxLast[i].build, acc: [...fxLast[i].build.acc] }, tier: fxLast[i].tier, placements: fxLast[i].placements } : null)));
   store.set('ttd.team', team);
   render();
   showView('team');
