@@ -25,7 +25,7 @@ export function parseCSV(text) {
   })));
 }
 
-export function indexData({ units, upgrades, effects, reforges, enemies = [], weapons = [], armors = [], accessories = [], whips = [], achievements = [] }) {
+export function indexData({ units, upgrades, effects, reforges, enemies = [], weapons = [], armors = [], accessories = [], whips = [], achievements = [], banners = [] }) {
   const byName = (arr) => Object.fromEntries(arr.map((r) => [r.name, r]));
   const ups = {};
   for (const r of upgrades) (ups[r.unit] ??= []).push(r);
@@ -34,7 +34,7 @@ export function indexData({ units, upgrades, effects, reforges, enemies = [], we
   for (const e of effects) (eff[e.item] ??= []).push(e);
   return {
     units: byName(units), upgrades: ups, effects: eff, reforges: byName(reforges),
-    enemies, weapons, armors, accessories, whips, achievements,
+    enemies, weapons, armors, accessories, whips, achievements, banners,
   };
 }
 
@@ -45,5 +45,6 @@ export async function loadAll(base = 'data/') {
       .map((n) => get(n + '.csv')));
   // optional: older data/ folders may not have achievements.csv yet
   const achievements = await fetch(base + 'achievements.csv').then((r) => (r.ok ? r.text() : '')).then((t) => (t ? parseCSV(t) : [])).catch(() => []);
-  return indexData({ units, upgrades, effects, reforges, enemies, weapons, armors, accessories, whips, achievements });
+  const banners = await fetch(base + 'banners.csv').then((r) => (r.ok ? r.text() : '')).then((t) => (t ? parseCSV(t) : [])).catch(() => []);
+  return indexData({ units, upgrades, effects, reforges, enemies, weapons, armors, accessories, whips, achievements, banners });
 }

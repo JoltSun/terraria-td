@@ -38,7 +38,7 @@
 
   <!-- ============ FIGHT ============ -->
   <section class="card" id="fight">
-    <h2>Fight</h2>
+    <h2>Enemy Select</h2>
     <div class="grid2">
       <label>Enemy <select id="enemy"></select></label>
       <label>Enemy DEF <input id="def" type="number" min="0" value="0"></label>
@@ -88,7 +88,7 @@
   <section class="card wide" id="optCard">
     <h2>Loadout Optimizer</h2>
     <p class="muted">Finds the best gear for the unit in the Build panel (same unit, tier, level and reforge).
-      DPS is scored against the act picked in Act analysis, or the Fight enemy if no act is picked.
+      DPS is scored against the act picked in Act analysis, or the enemy in Enemy Select if no act is picked.
       Range doesn't change DPS in the model, so use Min RNG or a range goal to protect coverage.</p>
     <div class="grid3">
       <label>Goal
@@ -126,7 +126,7 @@
   <section class="card wide" id="teamCard">
     <h2>Team</h2>
     <p class="muted">5 tower slots. "Set from Build" copies the Build panel into a slot; "Edit" loads a slot back into the Build panel.
-      Each slot has its own upgrade tier and number of placements. DPS is against the act picked below, or the Fight enemy if no act is picked.</p>
+      Each slot has its own upgrade tier and number of placements. DPS is against the act picked below, or the enemy in Enemy Select if no act is picked.</p>
     <div class="loadoutBar">
       <input id="loadoutName" type="text" placeholder="Loadout name">
       <button id="saveLoadout">Save loadout</button>
@@ -142,7 +142,7 @@
   <section class="card wide" id="planCard">
     <h2>Mana Planner</h2>
     <p class="muted">Plans the cheapest-first path to your Team: what to place and upgrade, in what order, for the most DPS per mana.
-      Your Team slots set the targets (upgrade level and placements). DPS is against the act picked in Act analysis, or the Fight enemy.</p>
+      Your Team slots set the targets (upgrade level and placements). DPS is against the act picked in Act analysis, or the enemy in Enemy Select.</p>
     <div class="grid3">
       <label>Starting mana <input id="planStart" type="number" min="0" value="324"></label>
       <label title="Mana Crystals give +0.4/s each (max 10); Flying Fish banner +0.5/s">Passive mana / sec <input id="planPassive" type="number" min="0" step="0.1" value="4.5"></label>
@@ -171,7 +171,7 @@
     </div>
     <p class="muted">Enemy counts are from one recorded run per act on the Trello board, so treat them as typical, not exact.
       Team Act DPS = every tower in your Team (× its placements) against each enemy (its own DEF and type tags), averaged by how many of that enemy spawn.
-      Enemy HP isn't used because it scales by wave; % max-HP units use the HP you type in the Fight panel.</p>
+      Enemy HP isn't used because it scales by wave; % max-HP units use the HP you type in Enemy Select.</p>
     <div id="actStats" class="stats"></div>
     <div class="twocol">
       <div><h3>Enemy mix</h3><table id="actTable" class="tbl"></table></div>
@@ -185,39 +185,28 @@
   <!-- ============ CHART ============ -->
   <section class="card wide" id="chartCard">
     <h2>DPS vs. Enemy Defense</h2>
-    <p class="muted">Each tower's line is its DPS × placements. Uses the Fight settings (targets, whip, HP, situational buffs).
-      Red dashed line = Fight enemy's DEF; gold dashed line = the picked act's average DEF.</p>
+    <p class="muted">Each tower's line is its DPS × placements. Uses the Enemy Select settings (targets, whip, HP, situational buffs).
+      Hover the chart to read every line at a given DEF.</p>
     <canvas id="chart" width="900" height="360"></canvas>
     <div id="legend" class="legend"></div>
     <div id="chartTeam" class="chartTeam"></div>
   </section>
 
-  <!-- ============ TOWERS RANKED ============ -->
-  <section class="card wide" id="rankCard">
-    <h2>Towers Ranked</h2>
-    <details id="rankHow" class="rankHow"><summary>How rankings work</summary>
-    <p class="muted">Every tower at max upgrade and Level 45. <b>Base</b> (default) ranks each tower exactly as it comes for the general categories: no weapon,
-      armor, accessories or reforge. <b>Best gear</b> gives each tower its own best gear per column (Legendary-first, kept at 11+ RNG).
-      <b>Overall</b> = percentile per stat (best = 100), weighted DPS 25% · Range 20% · Crowd 20% · Cost Efficiency 15% · Bossing 15% · Placement Count 5% (Crowd = the better of AoE damage and crowd control; Bossing = seconds for one max-level, max-upgrade tower with its best gear to kill a 2,800 HP Eye of Cthulhu).
-      <b>Cost Efficiency</b> = DPS per 1,000 mana for one placement at every upgrade tier (base purchase, 1/x, 2/x …), averaged — so towers that stay efficient along their whole upgrade path score best.
-      <b>Speedrun</b> emphasizes Cost Efficiency 50% · DPS 15% · Crowd 10% · Range 5% · Bossing 5% · Placement Count 15% (its crowd part favors cheap towers that clear enemies right at the portal).
-      Zoologist is treated as an inverted-range exception: her bunnies provide reverse-path coverage, so gear maximizes damage first and minimizes RNG as a tie-breaker.
-      Tiers are by percentile within the selected list: S 90th+ · A 75th+ · B 55th+ · C 35th+ · D 15th+ · F below the 15th. Scored against the act picked in Act Analysis, or the Fight
-      enemy if no act is picked, using your whip, Account Buffs, Achievements and "Items I don't own". Click a column to sort.</p>
-    </details>
-    <div class="rankBar"><div id="rankTabs" class="rankTabs"></div>
-      <div class="rankRight"><div id="rankViewPick" class="rankTabs"></div><div id="rankGearPick" class="rankTabs"></div>
-      <button id="rankRun" class="ghost" title="Re-run with your current settings">↻ Refresh</button></div></div>
-    <p id="rankStatus" class="muted"></p>
-    <div class="tblWrap" id="rankTableWrap"><table id="towerRankTable" class="tbl rankTbl"></table></div>
-    <div id="rankBoard" class="tierBoard" hidden></div>
+  <!-- ============ COMPARE TOWERS ============ -->
+  <section class="card wide" id="compareCard">
+    <h2>Compare Towers</h2>
+    <p class="muted">Raw tower stats you can check against the in-game stat screen: no scores, no tiers, no estimates.
+      Level 45. Click a column to sort. <b>Best gear</b> picks the gear with the highest stat-screen DPS.</p>
+    <div class="rankBar"><div id="cmpTierPick" class="rankTabs"></div><div id="cmpGearPick" class="rankTabs"></div></div>
+    <p id="cmpStatus" class="muted"></p>
+    <div class="tblWrap"><table id="cmpTable" class="tbl rankTbl"></table></div>
   </section>
 
   <!-- ============ FANTASY TEAMS ============ -->
   <section class="card wide" id="fantasyCard">
     <h2>Fantasy Teams</h2>
     <p class="muted">The best 5-tower teams if you owned every unit and item. Item copies are allowed across towers (two towers can both wear Ice Skates),
-      so every tower gets its own best gear. Damage is against the act picked in Act Analysis, or the Fight enemy if no act is picked.
+      so every tower gets its own best gear. Damage is against the act picked in Act Analysis, or the enemy in Enemy Select if no act is picked.
       Uses your Account Buffs and Achievements, Level 45, and the best reforge for each tower.</p>
     <div class="grid3">
       <label>Goal
@@ -273,25 +262,37 @@
   <!-- ============ ACCOUNT ============ -->
   <section class="card wide" id="acctCard">
     <h2>Account Buffs</h2>
-    <div class="grid3">
-      <label>Seafood Dinners (0–400) <input id="seafood" type="number" min="0" max="400"></label>
-    </div>
-    <div class="checks" id="acctChecks"></div>
-    <p class="muted">Boss Slayer and Pack a Punch tiers live in the Achievements tab. Saved in this browser.</p>
-  </section>
-
-  <!-- ============ WHIP ============ -->
-  <section class="card" id="whipCard">
-    <h2>Whip</h2>
-    <label>Whip <select id="whip">
+    <div class="acctWhip">
+      <label>Equipped whip <select id="whip">
           <option value="0">None</option>
           <option value="1">Cobwhip (+1)</option>
           <option value="2">Leather Whip (+2)</option>
           <option value="slime">Slime Whip (all enemies count as slimes)</option>
         </select></label>
-    <div id="whipInfo" class="whipInfo"></div>
-    <p class="muted">Like in-game: equip one from your inventory and it stays on for every match until you swap it. It affects every tower, so Build, Act Analysis, the Team, and Fantasy Teams all use it. Saved in this browser.</p>
+      <div id="whipInfo" class="whipInfo"></div>
+    </div>
+    <div class="grid3">
+      <label>Seafood Dinners (0–400) <input id="seafood" type="number" min="0" max="400"></label>
+    </div>
+    <div class="checks" id="acctChecks"></div>
+    <p class="muted">Your whip works like in-game: equip one and it stays on for every match, affecting every tower. Banners have their own panel below.
+      Boss Slayer and Pack a Punch tiers live in the Achievements tab. Saved in this browser.</p>
   </section>
+
+  <!-- ============ BANNERS ============ -->
+  <section class="card wide" id="bannerCard">
+    <h2>Banners</h2>
+    <p class="muted">Click a banner to mark it owned (green dot). ⚔ DPS banners change the damage math; the rest are tracked for your collection.</p>
+    <div class="bannerBar">
+      <input id="bannerSearch" type="text" placeholder="Search banners or effects…">
+      <button id="bannerAll" class="ghost">Select all</button>
+      <button id="bannerNone" class="ghost">Clear</button>
+    </div>
+    <div id="bannerGrid" class="bannerGrid"></div>
+    <div id="bannerCount" class="bannerCount"></div>
+    <p class="muted bannerCredit">Banner art by dragon1508.</p>
+  </section>
+
 
   <!-- ============ ACHIEVEMENTS ============ -->
   <section class="card wide" id="achCard">

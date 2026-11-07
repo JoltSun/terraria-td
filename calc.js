@@ -18,7 +18,7 @@ export const trunc2 = (x) => Math.floor(x * 100 + 1e-9) / 100;
 // except the flat ones (plantFiber, campfire) which are added after all multipliers.
 export const DEFAULT_ACCOUNT = {
   seafood: 193,          // Seafood Dinner count (0–400), +0.05% DMG each
-  act: true,             // Advanced Combat Technique, ×1.10 DMG
+  act: true,             // Advanced Combat Techniques, ×1.10 DMG
   bossSlayer: 5,         // achievement tiers 0–5, +1% DMG each (tiers add)
   packAPunch: 3,         // achievement tiers 0–4, +1% RNG each (tiers add)
   plantFiber: true,      // +1 RNG flat

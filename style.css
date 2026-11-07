@@ -248,3 +248,40 @@ header .sub { color: #fff; }
 .siteFooter { margin: 28px 0 12px; padding: 14px 4px 0; border-top: 1px solid var(--line); color: var(--muted);
               font-size: .8rem; line-height: 1.5; text-align: center; }
 .siteFooter a { color: var(--accent); }
+
+/* ---------- polished chart legend ---------- */
+#chart { display: block; width: 100%; cursor: crosshair; }
+.legend { gap: 8px 10px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 6px; border-radius: 999px;
+               background: rgba(20,26,72,.65); border: 1px solid rgba(120,140,255,.35); }
+.legend span::before { width: 14px; height: 4px; border-radius: 2px; margin-right: 0; }
+.legend span.total { border-color: var(--accent); font-weight: 700; }
+.legend span img.ico { width: 18px; height: 18px; }
+
+/* ---------- banners panel (in-game style) ---------- */
+.bannerBar { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+.bannerBar input { flex: 1 1 260px; max-width: 420px; }
+.bannerGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 8px; margin-top: 12px; }
+.bannerTile { display: flex; align-items: center; gap: 10px; text-align: left; padding: 8px 10px; border-radius: 8px; cursor: pointer;
+              background: var(--input); border: 2px solid var(--line); color: var(--ink); font: inherit; opacity: .62; transition: opacity .12s, border-color .12s; }
+.bannerTile:hover { opacity: .9; border-color: var(--rim); }
+.bannerTile.on { opacity: 1; border-color: #3ccf3c; }
+.bannerTile img, .bannerTile .noimg { width: 34px; height: 44px; object-fit: contain; image-rendering: pixelated; flex: none; }
+.bText { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.bName { font-weight: 700; }
+.bEffect { font-size: .82rem; color: var(--muted); }
+.bKills { font-size: .72rem; color: var(--muted); opacity: .75; }
+.bDot { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #0b0f33; background: #3a4278; }
+.bannerTile.on .bDot { background: #2fe02f; box-shadow: 0 0 6px rgba(47,224,47,.7); }
+.bannerCount { position: relative; margin-top: 14px; height: 30px; border-radius: 6px; overflow: hidden; background: #6b5a12;
+               border: 2px solid #0b0f33; display: flex; align-items: center; justify-content: center; }
+.bannerCount span { position: absolute; left: 0; top: 0; bottom: 0; background: #c9a20f; }
+.bannerCount b { position: relative; color: #fff; text-shadow: 1px 1px 0 #0b0f33; }
+
+/* whip, embedded at the top of Account Buffs */
+.acctWhip { display: grid; grid-template-columns: minmax(220px, 320px) 1fr; gap: 12px 18px; align-items: center;
+            background: var(--input); border: 2px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-top: 10px; }
+.acctWhip .whipInfo { margin-top: 0; }
+@media (max-width: 640px) { .acctWhip { grid-template-columns: 1fr; } }
+
+.bannerCredit { margin: .6rem 0 0; font-size: .75rem; text-align: right; opacity: .8; }

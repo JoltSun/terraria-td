@@ -57,22 +57,9 @@ const isOneCopy = (n) => copyLimit(n) < Infinity;
 
 // [key, label, icon category, icon name] — banners use their enemy's sprite
 const ACCT_CHECKS = [
-  ['act', 'Advanced Combat Technique (+10% DMG)', 'consumables', 'Advanced Combat Technique'],
+  ['act', 'Advanced Combat Techniques (+10% DMG)', 'consumables', 'Advanced Combat Technique'],
   ['plantFiber', 'Plant Fiber Guide (+1 RNG)', 'consumables', 'Plant Fiber Guide'],
-  ['campfire', 'Campfire (+1 Pen)', 'consumables', 'Campfire'],
-  ['sandSlime', 'Sand Slime Banner (+2% DMG)', 'enemies', 'Sand Slime'],
-  ['stormHatchling', 'Storm Hatchling Banner (−2% SPA)', 'enemies', 'Storm Hatchling'],
-  ['wanderingEyeFish', 'Wandering Eye Fish Banner (+2% RNG)', 'enemies', 'Wandering Eye Fish'],
-  ['desertScourge', 'Desert Scourge Banner (Min DMG 2)', 'enemies', 'Desert Scourge'],
-  ['spikedSlime', 'Spiked Slime Banner (−1 DEF)', 'enemies', 'Spiked Slime'],
-  ['patchwerk', 'Patchwerk Banner (−1 DEF)', 'enemies', 'Patchwerk'],
-  ['iceBat', 'Ice Bat Banner (+5% at Night)', 'enemies', 'Ice Bat'],
-  ['undeadViking', 'Undead Viking Banner (+5% vs. Bosses)', 'enemies', 'Undead Viking'],
-  ['kingSlime', 'King Slime Banner (+10% vs. Slimes)', 'enemies', 'King Slime'],
-  ['eyeOfCthulhu', 'Eye of Cthulhu Banner (+10% vs. Flying)', 'enemies', 'Eye of Cthulhu'],
-  ['frozenZombie', 'Frozen Zombie Banner (+10% vs. Zombies)', 'enemies', 'Frozen Zombie'],
-  ['iceSlime', 'Ice Slime Banner (+10% vs. Slowed)', 'enemies', 'Ice Slime'],
-  ['cyanBeetle', 'Cyan Beetle Banner (+10% vs. Full HP)', 'enemies', 'Cyan Beetle'],
+  ['campfire', 'Campfire (+1 Penetration)', 'consumables', 'Campfire'],
 ];
 
 function opts(sel, names, blank) {
@@ -114,32 +101,36 @@ async function init() {
   account.seafood = clampSeafood(account.seafood);   // fix any old out-of-range saved value
   $('seafood').value = account.seafood;
   $('achList').onclick = onAchClick;
+  renderBanners();
+  $('bannerGrid').addEventListener('click', (ev) => {
+    const t = ev.target.closest('[data-banner]'); if (!t) return;
+    setBanner(t.dataset.banner, !bannerOwned(t.dataset.banner)); renderBanners(); render();
+  });
+  $('bannerSearch').addEventListener('input', renderBanners);
+  $('bannerAll').onclick = () => { for (const r of D.banners) setBanner(bannerName(r), true); renderBanners(); render(); };
+  $('bannerNone').onclick = () => { for (const r of D.banners) setBanner(bannerName(r), false); renderBanners(); render(); };
   $('fxRun').onclick = runFantasy;
-  $('rankRun').onclick = runRanking;
-  renderRankTabs();
-  $('rankHow').open = store.get('ttd.rankHow', false);   // explanation starts collapsed; remembers if you open it
-  $('rankHow').addEventListener('toggle', () => store.set('ttd.rankHow', $('rankHow').open));
-  $('rankViewPick').addEventListener('click', (ev) => {
-    const b = ev.target.closest('button[data-view]'); if (!b) return;
-    rankView = b.dataset.view; store.set('ttd.rankView', rankView); renderRanking();
+  renderComparePickers();
+  // chart hover: crosshair + tooltip (redraws from the cached lines, no recalculation)
+  $('chart').addEventListener('mousemove', (ev) => {
+    const C = chartCache; if (!C || C.empty) return;
+    const r = $('chart').getBoundingClientRect(), x = ev.clientX - r.left, pl = 62, pw = C.W - 62 - 22;
+    chartHover = x >= pl && x <= pl + pw ? ((x - pl) / pw) * C.capDef : null; paintChart();
   });
-  $('rankGearPick').addEventListener('click', (ev) => {
-    const b = ev.target.closest('button[data-gear]'); if (!b || b.dataset.gear === rankGear || $('rankRun').disabled) return;
-    rankGear = b.dataset.gear; store.set('ttd.rankGear', rankGear); renderRankTabs(); runRanking();
+  $('chart').addEventListener('mouseleave', () => { chartHover = null; paintChart(); });
+  $('cmpTierPick').addEventListener('click', (ev) => {
+    const b = ev.target.closest('button[data-tier]'); if (!b) return;
+    cmpTier = b.dataset.tier; store.set('ttd.cmpTier', cmpTier); runCompare();
   });
-  $('rankTabs').addEventListener('click', (ev) => {
-    const b = ev.target.closest('button[data-list]'); if (!b) return;
-    rankList = b.dataset.list; store.set('ttd.rankList', rankList);
-    rankSort = { key: RANK_LISTS.find((l) => l.id === rankList).key, dir: -1 };
-    store.set('ttd.rankSort2', rankSort);
-    renderRanking();
+  $('cmpGearPick').addEventListener('click', (ev) => {
+    const b = ev.target.closest('button[data-gear]'); if (!b || b.dataset.gear === cmpGear) return;
+    cmpGear = b.dataset.gear; store.set('ttd.cmpGear', cmpGear); runCompare();
   });
-  $('towerRankTable').addEventListener('click', (ev) => {
+  $('cmpTable').addEventListener('click', (ev) => {
     const th = ev.target.closest('th[data-sort]'); if (!th) return;
     const k = th.dataset.sort;
-    rankSort = rankSort.key === k ? { key: k, dir: -rankSort.dir } : { key: k, dir: RANK_COLS.find((c) => c.k === k)?.low ? 1 : -1 };
-    store.set('ttd.rankSort2', rankSort);
-    renderRanking();
+    cmpSort = cmpSort.key === k ? { key: k, dir: -cmpSort.dir } : { key: k, dir: CMP_COLS.find((c) => c.k === k)?.low ? 1 : -1 };
+    store.set('ttd.cmpSort', cmpSort); renderCompare();
   });
   $('fxRealistic').checked = store.get('ttd.fxRealistic', false);
   const fxRareVis = () => {
@@ -250,7 +241,7 @@ async function init() {
   refreshLoadouts();
   render();
   appReady = true;
-  if (store.get('ttd.view', 'build') === 'rank' && !rankRows) runRanking();   // reopened on Towers Ranked
+  if (store.get('ttd.view', 'build') === 'compare' && !cmpRows) runCompare();   // reopened on Compare Towers
 }
 let appReady = false;
 
@@ -363,12 +354,11 @@ const HEADING_ICONS = {
   'header h1': ['units', 'Guide'],
   '#build h2': ['weapons', 'Copper Shortsword'],
   '#fight h2': ['enemies', 'King Slime'],
-  '#whipCard h2': ['whips', 'Leather Whip'],
   '#results h2': ['consumables', 'DPS Meter'],
   '#actCard h2': ['enemies', 'Eye of Cthulhu'],
   '#chartCard h2': ['accessories', 'Shark Tooth Necklace'],
   '#acctCard h2': ['consumables', 'Seafood Dinner'],
-  '#rankCard h2': ['consumables', 'Golden Crate'],
+  '#compareCard h2': ['consumables', 'Golden Crate'],
   '#fantasyCard h2': ['accessories', 'Gold Crown'],
   '#achCard h2': ['accessories', 'Platinum Crown'],
 };
@@ -470,7 +460,7 @@ function fightFor(name) {
            flying: !!t.flying, zombie: !!t.zombie, slowed: false, fullHp: false };
 }
 // Count-weighted average of your DPS against each enemy in the act.
-// Enemy HP isn't used (it scales by wave); % max-HP damage uses the HP typed in the Fight panel.
+// Each enemy's bestiary max HP drives % max-HP damage (Digtoise, Flinx) and lock-on re-target pauses.
 function actDPS(b, mix, f) {
   // Lock-on units (Suspicious Eye): time-correct rate = HP killed ÷ (kill time + re-target pause per kill).
   // "Strong" targeting picks the tankiest enemy on screen, so kills are weighted by HP (the trash dies to others).
@@ -513,7 +503,7 @@ function rankTarget(buildPanel) {
 }
 // 1 -> '1st', 2 -> '2nd', 3 -> '3rd', 11 -> '11th', 22 -> '22nd'
 const ordinal = (n) => n + ((n % 100 >= 11 && n % 100 <= 13) ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th'));
-// Bad Luck from a Black Cat in the Team (placed), at its upgrade tier; the Fight panel value is the floor
+// Bad Luck from a Black Cat in the Team (placed), at its upgrade tier; the Enemy Select value is the floor
 function teamBadLuck() {
   const rows = D.upgrades['Black Cat'] || [];
   return Math.max(0, ...team.filter((t) => t && t.build.unit === 'Black Cat' && t.placements > 0)
@@ -1001,246 +991,123 @@ function loadFantasy() {
   showView('team');
 }
 
-// ---------- towers ranked ----------
-// Columns: k = row field, low = smaller is better (default sort ascending), d = decimals
-// Overall score = weighted percentiles (Jolt's weights).
-// Crowd merges AoE damage and crowd control: the better of the two percentiles (shred a swarm OR freeze it).
-const RANK_STATS = [
-  { k: 'each', label: 'DPS', w: 25 }, { k: 'rangeScore', label: 'Range', w: 20 }, { k: 'crowd', label: 'Crowd', w: 20 },
-  { k: 'eff', label: 'Cost Efficiency', w: 15 },
-  { k: 'boss', label: 'Bossing', w: 15 }, { k: 'pl', label: 'Placement Count', w: 5 },
+// ---------- compare towers ----------
+// Raw, checkable stats only (everything here can be matched against the in-game stat screen):
+// no scores, no tiers, no "how many enemies it hits" estimates.
+const CMP_COLS = [
+  { k: 'dps', label: 'DPS', d: 1, title: 'Stat-screen DPS: DMG ÷ SPA with crit and double attack (the number the game shows)' },
+  { k: 'dmg', label: 'DMG', d: 1, title: 'Damage per hit (stat screen)' },
+  { k: 'spa', label: 'SPA', d: 2, low: true, title: 'Seconds per attack (lower is faster)' },
+  { k: 'rng', label: 'RNG', d: 1, title: 'Range' },
+  { k: 'splash', label: 'Splash', d: 1, title: 'Splash radius as listed' },
+  { k: 'chain', label: 'Chain', d: 0, title: 'Max Chain: bounces to the next enemy in line (never the same enemy twice); % = damage kept per bounce' },
+  { k: 'pen', label: 'Pen', d: 0, title: 'Penetration: enemies a shot passes through' },
+  { k: 'pl', label: 'Placements', d: 0, title: 'Max placements' },
+  { k: 'cost', label: 'Cost', d: 0, low: true, title: 'Mana for one placement at this upgrade (placement + upgrades)' },
+  { k: 'costAll', label: 'Cost × placements', d: 0, low: true, title: 'Mana for every placement at this upgrade' },
 ];
-const SPEEDRUN_STATS = [
-  { k: 'eff', w: 50 }, { k: 'each', w: 15 }, { k: 'spawnCrowd', w: 10 },
-  { k: 'rangeScore', w: 5 }, { k: 'boss', w: 5 }, { k: 'pl', w: 15 },
-];
-const RANK_MIN_RNG = 11;   // fairness floor: every build is searched to keep at least this much range
-const BOSS_BENCHMARK = { name: 'Eye of Cthulhu', HP: 2800 };
-const EFFICIENCY_TARGETS = [30, 50];
-// tiers by PERCENTILE within the selected list (Jolt's scale): S 90th+ · A 75th+ · B 55th+ · C 35th+ · D 15th+ · F below
-const tierOf = (p) => (p >= 90 ? 'S' : p >= 75 ? 'A' : p >= 55 ? 'B' : p >= 35 ? 'C' : p >= 15 ? 'D' : 'F');
-const pctRanks = (rows, k) => {
-  const vals = rows.map((r) => r[k]);
-  for (const r of rows) {
-    const below = vals.filter((v) => v < r[k] - 1e-9).length, ties = vals.filter((v) => Math.abs(v - r[k]) <= 1e-9).length - 1;
-    r['pct_' + k] = rows.length > 1 ? 100 * (below + ties / 2) / (rows.length - 1) : 100;
-  }
-};
-// The selectable lists (tabs): each ranks by one stat and gives its own tier from that stat's percentile
-const RANK_LISTS = [
-  { id: 'overall', label: 'Overall', key: 'overall' },
-  { id: 'speedrun', label: 'Speedrun', key: 'speedrun' },
-  { id: 'dps', label: 'DPS', key: 'each' },
-  { id: 'eff', label: 'Cost Efficiency', key: 'eff' },
-  { id: 'rng', label: 'Range', key: 'rangeScore' },
-  { id: 'crowd', label: 'Crowd', key: 'crowd' },
-  // Speedrun Crowd stays internal (it only feeds the Speedrun score) — no tab of its own
-  { id: 'boss', label: 'Bossing', key: 'boss' },
-  { id: 'placements', label: 'Placement Count', key: 'pl' },
-];
-let rankList = store.get('ttd.rankList', 'overall');
-if (!RANK_LISTS.some((l) => l.id === rankList)) rankList = 'overall';   // a removed tab (e.g. Speedrun Crowd) was saved
-// 'true' = Base: no gear AND no reforge — the tower exactly as it comes (Lv 45 + account buffs still apply).
-//          (A Legendary-only mode was dropped: Legendary scales every tower equally, so it never changed the order.)
-// 'best' = each tower with its own best gear per column
-let rankGear = store.get('ttd.rankGear', 'true');
-if (rankGear !== 'best') rankGear = 'true';   // an older saved 'base' choice → Base
-const RANK_GEAR_MODES = [['true', 'Base'], ['best', 'Best gear']];
-let rankView = store.get('ttd.rankView', 'table');   // 'table' | 'board' (classic tier-list rows)
-const TIER_ORDER = ['S', 'A', 'B', 'C', 'D', 'F'];
-const RANK_COLS = [
-  { k: 'overall', label: 'Overall', title: 'Weighted percentile score: DPS 25% · Range 20% · Crowd 20% · Cost Efficiency 15% · Bossing 15% · Placement Count 5%', d: 1 },
-  { k: 'speedrun', label: 'Speedrun', title: 'Speedrun score: Cost Efficiency 50% · DPS 15% · Crowd 10% · Range 5% · Bossing 5% · Placement Count 15%', d: 1 },
-  { k: 'maxDps', label: 'Max DPS', title: 'Max upgrade × all placements, single-target', d: 1 },
-  { k: 'each', label: 'DPS / tower', title: 'One placement at max upgrade, single-target', d: 1 },
-  { k: 'light', label: 'Light crowd', title: 'One placement, light crowd (splash catches more), with crowd gear', d: 1 },
-  { k: 'crowd', label: 'Crowd', title: 'Medium-crowd DPS (one placement, crowd gear) — plus ❄ enemy-seconds frozen per second for Confusion towers. Sorts by the merged Crowd score: the better of the AoE-damage and control percentiles', d: 1 },
-  { k: 'eff', label: 'Cost Efficiency', title: 'Average DPS per 1,000 mana across every upgrade tier (one placement): base, 1/x, 2/x … averaged. Hover a value for the per-tier breakdown', d: 1 },
-  { k: 'cost30', label: 'Cost → 30 DPS', title: 'Lowest mana cost to reach at least 30 DPS across upgrade tiers and placements', d: 0, low: true },
-  { k: 'cost50', label: 'Cost → 50 DPS', title: 'Lowest mana cost to reach at least 50 DPS across upgrade tiers and placements', d: 0, low: true },
-  { k: 'rng', label: 'RNG', title: 'Range with its best single-target DPS gear', d: 1 },
-  { k: 'rangeScore', label: 'Range', title: 'Maximum useful range; Zoologist is reverse-path and instead maximizes damage with minimum RNG', d: 1 },
-  { k: 'bossTime', label: 'Boss kill time', title: 'Seconds for one max-level, max-upgrade tower with its best gear to kill a 2,800 HP Eye of Cthulhu', d: 2, low: true },
-  { k: 'cost', label: 'Cost to max', title: 'Mana for every placement at max upgrade', d: 0, low: true },
-  { k: 'pl', label: 'Placements', title: 'Max placements', d: 0 },
-];
-// Towers whose best form comes before max upgrade are scored there (Jolt): Slime Prince's 3/3 Globe is slow and
-// pricey, while 2/3 (SPA 2.0, Splash 4.5, 425 mana) is the version people actually run.
-const RANK_TIER = { 'Slime Prince': 2 };
-const rankTier = (u) => Math.min(D.upgrades[u].length - 1, RANK_TIER[u] ?? Infinity);
-let rankMeta = null;   // what the last run was scored against (for the per-tab status line)
-let rankRows = null, rankSort = store.get('ttd.rankSort2', { key: 'overall', dir: -1 });
-// a Fantasy-style context for one crowd setting (no range band)
-function rankCtx(density, spawnCrowd = false) {
-  const f = fightOpts(), mix = actMix();
-  f.opts = { ...f.opts, targets: 1, ...(spawnCrowd ? { spawnCrowd: true, clump: 8 }
-    : density ? { density, clump: 8 } : {}) };
-  const vs = mix && mix.length ? `${$('act').value} (${$('diff').value})` : `${$('enemy').value || 'custom enemy'} (DEF ${f.enemy.DEF})`;
-  const dps = (b) => (mix && mix.length ? actDPS(b, mix, f) : realDPS(stats(b, f.fight), f.enemy, f.opts));
-  return { dps, vs, key: JSON.stringify([vs, f, account, spawnCrowd]), band: [RANK_MIN_RNG, Infinity], tierFor: rankTier };
+const CMP_SLIMED = { 'Slime Prince': 1, 'Slime Staff': 0 };   // applies Slimed (4s) from this upgrade on (Jolt)
+let cmpTier = store.get('ttd.cmpTier', 'max');                 // 'max' or an upgrade number
+let cmpGear = store.get('ttd.cmpGear', 'base');                // 'base' (no gear, no reforge) | 'best' (highest stat-screen DPS)
+let cmpSort = store.get('ttd.cmpSort', { key: 'dps', dir: -1 });
+let cmpRows = null;
+const cmpTierOf = (u) => { const max = D.upgrades[u].length - 1; return cmpTier === 'max' ? max : Math.min(max, Number(cmpTier)); };
+function cmpSpecials(u, s, tier) {
+  const row = D.upgrades[u][tier] || {}, out = [];
+  if (s.Globe > 0) out.push(`Globe ${fmt(s.Globe, 0)}`);
+  if (s.percent > 0) out.push(`${fmt(s.percent, 0)}% max HP (≤100/hit)`);
+  if (s.pellets > 1) out.push(`${s.pellets} pellets`);
+  if (s.confusion > 0) out.push(`Confusion ${fmt(s.confusion, 0)}s`);
+  if (Number(row['Bad Luck'])) out.push(`Bad Luck +${row['Bad Luck']}% crit`);
+  if (CMP_SLIMED[u] != null && tier >= CMP_SLIMED[u]) out.push('Slimed 4s');
+  if (s.retargetDelay > 0) out.push(`Lock-on (${s.retargetDelay}s re-target)`);
+  if (INVERTED_RANGE_UNITS.has(u)) out.push('Reverse path');
+  return out;
 }
-const UNMODELED = (u) => /Bad Luck/.test(D.units[u].other_stats || '');   // its team buff isn't in these per-tower lists
-async function runRanking() {
+async function runCompare() {
   const units = Object.keys(D.units).filter((u) => D.upgrades[u]?.length && !NON_DAMAGING_UNITS.includes(u));
-  const cS = rankCtx(null), cL = rankCtx(FX_DENSITY.light), cM = rankCtx(FX_DENSITY.medium), cSpawn = rankCtx(null, true);
-  // Bossing: time to kill one fixed Eye of Cthulhu. HP is 0 for realDPS so a lock-on tower's
-  // post-kill re-target delay is not charged after the benchmark target is already dead.
-  const fB = fightOpts(), eye = D.enemies.find((e) => e.name === BOSS_BENCHMARK.name) || {};
-  const bossEnemy = { DEF: Number(eye.Defense) || 0, maxHP: BOSS_BENCHMARK.HP, HP: 0 };
-  const cB = { ...cS, band: null, key: `${cS.key}|boss:${BOSS_BENCHMARK.name}:${BOSS_BENCHMARK.HP}:one-best`,
-    dps: (b) => realDPS(stats(b, fightFor(BOSS_BENCHMARK.name)), bossEnemy,
-      { ...fB.opts, targets: 1, chainTargets: 1 }) };   // a lone boss: no AoE multiplier or chain bounces
-  $('rankRun').disabled = true;
-  const t0 = performance.now(), rows = [];
+  // "Best gear" = the gear with the highest STAT-SCREEN DPS (no act, crowd or enemy model involved)
+  const ctx = { key: 'cmp-screen|' + cmpTier + '|' + JSON.stringify(account), band: null, tierFor: cmpTierOf,
+                dps: (b) => screenDPS(stats(b, {})) };
+  const rows = [];
   for (let i = 0; i < units.length; i++) {
-    const u = units[i];
-    const base = rankGear !== 'best';
-    $('rankStatus').textContent = base ? `Scoring ${u} (${i + 1}/${units.length})…` : `Finding the best gear for ${u} (${i + 1}/${units.length})…`;
-    await fxPause();   // Bossing always performs a best-gear search, even while the other columns use Base
-    const pl = Number(D.units[u].max_placements) || 1;
-    const bare = { unit: u, tier: String(rankTier(u)), level: 45, reforge: 'None',
-                   weapon: '', helmet: '', chest: '', boots: '', acc: Array(Number(D.units[u].accessory_slots) || 0).fill('') };
-    const best = (mode, ctx) => (base ? bare : fxBestBuild(u, mode, ctx));
-    const bS = best('dps', cS), st = stats(bS, {}), each = cS.dps(bS);
-    const bL = best('dps', cL), bM = best('dps', cM), bK = best('luck', cS);
-    // Speedrun spawn killing always considers best eligible gear. This lets the optimizer decide
-    // whether Black Counterweight's +2 Splash is worth its 0.9x DMG tradeoff for every tower.
-    const bSpawn = fxBestBuild(u, 'dps', cSpawn);
-    const luck = stats(bK, {}).luck;
-    const invertedRange = INVERTED_RANGE_UNITS.has(u);
-    const bR = best('rng', { ...cS, key: cS.key + '|range', band: null }), maxRng = stats(bR, {}).RNG;
-    // Zoologist's bunnies traverse the path in reverse, giving functional map-wide coverage.
-    // A sentinel makes that coverage rank first without pretending its displayed RNG is high.
-    const rangeScore = invertedRange ? 1e6 : maxRng;
-    // Bossing is deliberately gear-independent from the Base/Best toggle: it always tests one
-    // fully upgraded placement with the best eligible gear, as a fixed tower-strength benchmark.
-    const bB = fxBestBuild(u, 'dps', cB), boss = cB.dps(bB);
-    const bossTime = boss > 0 ? BOSS_BENCHMARK.HP / boss : Infinity;
-    const bC = stats(bS, {}).confusion ? best('control', cS) : null;
-    const control = bC ? controlRate(stats(bC, {})) : 0;
-    // Tempo efficiency: cheapest mix of placements and upgrade tiers that reaches each practical DPS breakpoint.
-    // Range is scored separately, so low-range early tiers are allowed to compete here.
-    const onePlacement = fxOptions(bS, cS).filter((o) => o.placements === 1);
-    const cost30 = minCostForDps(onePlacement, pl, EFFICIENCY_TARGETS[0]);
-    const cost50 = minCostForDps(onePlacement, pl, EFFICIENCY_TARGETS[1]);
-    // Cost Efficiency (Jolt): DPS per 1k mana at EVERY upgrade tier — base purchase, 1/x, 2/x … — averaged.
-    // Rewards towers that stay efficient along their whole upgrade path, not just at one breakpoint.
-    const tierEff = [...onePlacement].sort((a, b) => a.tier - b.tier).map((o) => ({ t: o.tier, e: o.each / o.cost * 1000 }));
-    // Free tiers (Desert Acolyte's 0-mana base) are infinitely efficient — rank by the paid tiers only (Jolt)
-    const paid = tierEff.filter((x) => Number.isFinite(x.e));
-    const avgEff = paid.length ? paid.reduce((t, x) => t + x.e, 0) / paid.length : 0;
-    rows.push({ eff: avgEff, effTiers: tierEff, unit: u, build: bS, maxDps: each * pl, each, light: cL.dps(bL), medium: cM.dps(bM), spawn: cSpawn.dps(bSpawn),
-                maxRng, rangeScore, invertedRange, boss, bossTime, control, controlGear: bC ? fxGear(bC).join(', ') : '', cost30, cost50,
-                cost30Score: Number.isFinite(cost30) ? 1 / cost30 : 0, cost50Score: Number.isFinite(cost50) ? 1 / cost50 : 0,
-                maxTier: D.upgrades[u].length - 1, rng: st.RNG, lucky: cS.dps(bK) * luck, luck, cost: st.cost * pl, pl,
-                flag: UNMODELED(u), short: !base && st.RNG < RANK_MIN_RNG - 1e-9 });
+    const u = units[i], tier = cmpTierOf(u);
+    if (cmpGear === 'best') { $('cmpStatus').textContent = `Finding the best gear for ${u} (${i + 1}/${units.length})…`; await fxPause(); }
+    const b = cmpGear === 'best' ? { ...fxBestBuild(u, 'dps', ctx), tier: String(tier) }
+      : { unit: u, tier: String(tier), level: 45, reforge: 'None', weapon: '', helmet: '', chest: '', boots: '',
+          acc: Array(Number(D.units[u].accessory_slots) || 0).fill('') };
+    const s = stats(b, {}), pl = Number(D.units[u].max_placements) || 1;
+    rows.push({ unit: u, build: b, tier, maxTier: D.upgrades[u].length - 1,
+                dps: screenDPS(s), dmg: s.DMG_screen, spa: s.SPA, rng: s.RNG, splash: s.Splash || 0,
+                chain: s.chains > 1 ? s.chains : 0, preserve: s.preserve, pen: s.Pen || 0, pl,
+                cost: s.cost, costAll: s.cost * pl, specials: cmpSpecials(u, s, tier) });
   }
-  // Crowd = the better of the AoE-damage percentile and the control percentile (control ranked among towers that have it)
-  pctRanks(rows, 'medium'); pctRanks(rows, 'spawn');
-  pctRanks(rows.filter((r) => r.control > 0), 'control');
-  for (const r of rows) {
-    if (!(r.control > 0)) r.pct_control = 0;
-    r.crowd = Math.max(r.pct_medium, r.pct_control);
-    // Stalling is valuable under sustained pressure, but it does not substitute for clearing
-    // the portal quickly. Speedrun Crowd therefore uses damage only, not the control percentile.
-    r.spawnCrowd = 0.75 * r.pct_spawn + 0.25 * r.pct_medium;
-  }
-  pctRanks(rows, 'cost30Score'); pctRanks(rows, 'cost50Score');
-  // (Cost → 30 / 50 DPS stay as info columns; Cost Efficiency itself is the per-tier average set above.)
-  // Percentile per base stat (best = 100), then the weighted composite lists.
-  const composites = new Set(['overall', 'speedrun']);
-  for (const k of new Set([...RANK_STATS.map((s) => s.k), ...SPEEDRUN_STATS.map((s) => s.k),
-    ...RANK_LISTS.map((l) => l.key).filter((k) => !composites.has(k))])) pctRanks(rows, k);
-  const weighted = (r, stats) => stats.reduce((t, s) => t + s.w * r['pct_' + s.k], 0) /
-    stats.reduce((t, s) => t + s.w, 0);
-  for (const r of rows) { r.overall = weighted(r, RANK_STATS); r.speedrun = weighted(r, SPEEDRUN_STATS); }
-  pctRanks(rows, 'overall');
-  pctRanks(rows, 'speedrun');
-  // Control only ranks towers that have it (the rest tie at 0 and get no tier)
-  const ctl = rows.filter((r) => r.control > 0); if (ctl.length) pctRanks(ctl, 'control');
-  rankRows = rows;
-  // Economy & support towers (Merchant, Star Merchant, Squashling) aren't ranked: they don't deal damage
-  const mixA = actMix();
-  rankMeta = { n: rows.length, gear: rankGear,
-               where: mixA && mixA.length ? `${$('act').value} ${$('diff').value}` : null, vs: cS.vs };
-  $('rankRun').disabled = false;
-  renderRanking();
+  cmpRows = rows;
+  $('cmpStatus').textContent = `${rows.length} towers · ${cmpTier === 'max' ? 'max upgrade' : `upgrade ${cmpTier} (or each tower's max, if lower)`} · ` +
+    (cmpGear === 'best' ? 'best gear by stat-screen DPS (Lv 45)' : 'base stats: no gear, no reforge (Lv 45)');
+  renderCompare();
 }
-function renderRankTabs() {
-  $('rankTabs').innerHTML = RANK_LISTS.map((l) => `<button data-list="${l.id}" class="${l.id === rankList ? 'on' : ''}">${l.label}</button>`).join('');
-  $('rankViewPick').innerHTML = [['table', 'Table'], ['board', 'Tier list']]
-    .map(([v, t]) => `<button data-view="${v}" class="${v === rankView ? 'on' : ''}">${t}</button>`).join('');
-  $('rankGearPick').innerHTML = RANK_GEAR_MODES
-    .map(([v, t]) => `<button data-gear="${v}" class="${v === rankGear ? 'on' : ''}">${t}</button>`).join('');
+function renderComparePickers() {
+  const pill = (attr, v, t, on) => `<button data-${attr}="${v}" class="${on ? 'on' : ''}">${t}</button>`;
+  $('cmpTierPick').innerHTML = [['max', 'Max upgrade'], ['0', '0'], ['1', '1'], ['2', '2'], ['3', '3'], ['4', '4']]
+    .map(([v, t]) => pill('tier', v, t, String(cmpTier) === v)).join('');
+  $('cmpGearPick').innerHTML = [['base', 'Base'], ['best', 'Best gear']].map(([v, t]) => pill('gear', v, t, cmpGear === v)).join('');
 }
-// Classic tier-list rows: colored tier label + each tower's sprite and name, best first within a tier
-function renderTierBoard(list) {
-  const pk = 'pct_' + list.key, val = list.key === 'overall' ? 'overall' : list.key;
-  const byTier = Object.fromEntries(TIER_ORDER.map((t) => [t, []]));
-  for (const r of rankRows) byTier[tierOf(r[pk])].push(r);
-  const valFmt = (r) => (list.key === 'crowd' ? `Crowd ${fmt(r.medium, 1)} DPS${r.control ? ` · ❄ ${fmt(r.control, 2)}` : ''}`
-    : list.key === 'spawnCrowd' ? `Spawn ${fmt(r.spawn, 1)} DPS · score ${fmt(r.spawnCrowd, 1)}`
-    : list.key === 'rangeScore' && r.invertedRange ? `RNG ${fmt(r.maxRng, 1)} (lower is better)`
-    : list.key === 'rangeScore' ? `Range: ${fmt(r.maxRng, 1)}`
-    : list.key === 'boss' ? `${BOSS_BENCHMARK.name}: ${fmt(r.bossTime, 2)} seconds`
-    : list.key === 'pl' ? `${fmt(r.pl, 0)} placements`
-    : `${list.label}: ${fmt(r[val], list.key === 'eff' ? 2 : 1)}`);
-  $('rankBoard').innerHTML = `<div class="tierBoardTitle">${list.label} tier list <span class="muted">· ${rankGear === 'best' ? 'Best gear' : 'Base stats'}</span></div>` +
-    TIER_ORDER.map((t) => `<div class="tierRow"><div class="tierLabel tierBg${t}">${t}</div><div class="tierItems">${
-      byTier[t].sort((a, b) => b[pk] - a[pk]).map((r) => {
-        const ic = ICONS.units?.[r.unit];
-        return `<div class="tierItem" title="${r.unit} — ${valFmt(r)} (percentile ${fmt(r[pk], 0)})">
-          ${ic ? `<img src="${encodeURI(ic)}" alt="">` : '<span class="noimg"></span>'}<span>${r.unit}${r.flag ? ' ⚑' : ''}</span></div>`;
-      }).join('') || '<span class="muted tierEmpty">—</span>'}</div></div>`).join('');
-}
-// Status line in Jolt's wording, saying what the selected list is measured against:
-// wave lists → the act's enemies; Bossing → the boss benchmark; composites mention both.
-function rankStatusLine(list) {
-  if (!rankMeta) return;
-  const boss = `${BOSS_BENCHMARK.name} (${fmt(BOSS_BENCHMARK.HP, 0)} HP)`;
-  const own = (x) => (rankMeta.where ? `${rankMeta.where}'s ${x}` : x);
-  const waves = rankMeta.where ? `${rankMeta.where}'s enemies` : rankMeta.vs;
-  const target = list.key === 'boss' ? own(boss)
-    : ['overall', 'speedrun'].includes(list.key) ? `${waves} (Bossing: ${BOSS_BENCHMARK.name}, ${fmt(BOSS_BENCHMARK.HP, 0)} HP)` : waves;
-  const gear = rankMeta.gear === 'best' ? 'Best gear' : 'Base stats (no gear, no reforge)';
-  $('rankStatus').textContent = `${rankMeta.n} towers ranked vs. ${target}. ${gear}.`;
-}
-function renderRanking() {
-  renderRankTabs();
-  if (!rankRows) return;
-  const board = rankView === 'board';
-  $('rankBoard').hidden = !board; $('rankTableWrap').hidden = board;
-  if (board) { const l = RANK_LISTS.find((x) => x.id === rankList) || RANK_LISTS[0]; rankStatusLine(l); renderTierBoard(l); return; }
-  const list = RANK_LISTS.find((l) => l.id === rankList) || RANK_LISTS[0];
-  if (!RANK_COLS.some((c) => c.k === rankSort.key)) rankSort = { key: list.key, dir: -1 };   // a removed column was saved
-  const base = rankGear !== 'best';
-  const cols = RANK_COLS.filter((c) => !(base && c.k === 'rng'));   // Base RNG and Max RNG are identical
-  const { key, dir } = rankSort;
-  rankStatusLine(list);
-  const tierCell = (r) => { if (list.key === 'control' && !r.control) return '<span class="muted">—</span>';
-    const t = tierOf(r['pct_' + list.key]); return `<span class="tier tier${t}" title="${list.label} tier (percentile ${fmt(r['pct_' + list.key], 0)})">${t}</span>`; };
-  const rows = [...rankRows].sort((a, b) => dir * (a[key] - b[key]) || b.maxDps - a.maxDps);
+function renderCompare() {
+  renderComparePickers();
+  if (!cmpRows) return;
+  if (!CMP_COLS.some((c) => c.k === cmpSort.key)) cmpSort = { key: 'dps', dir: -1 };
+  const { key, dir } = cmpSort;
+  const rows = [...cmpRows].sort((a, b) => dir * (a[key] - b[key]) || b.dps - a.dps);
   const ico = (cat, n) => (n && ICONS[cat]?.[n] ? `<img class="ico" src="${encodeURI(ICONS[cat][n])}" alt="" title="${n}">` : '');
-  const gearIcons = (b) => [ico('weapons', b.weapon), ico('armors', b.helmet), ico('armors', b.chest), ico('armors', b.boots),
-                            ...b.acc.map((a) => ico('accessories', a))].join('');
-  const bars = (r) => `<div class="statBars">${RANK_STATS.map((s) =>
-    `<span title="${s.label}: ${fmt(r['pct_' + s.k], 0)} / 100"><i style="width:${Math.max(4, r['pct_' + s.k])}%"></i><b>${s.label[0]}</b></span>`).join('')}</div>`;
-  $('towerRankTable').innerHTML = `<tr><th>#</th><th title="${list.label} tier by percentile: S 90th+ · A 75th+ · B 55th+ · C 35th+ · D 15th+ · F below 15th">Tier</th>` + '<th style="text-align:left">Tower</th><th style="text-align:left" title="Percentile (best = 100): DPS · Cost Efficiency · Range · Crowd · Bossing · Placement Count">Stats</th>' + (base ? '' : '<th style="text-align:left">Best DPS gear</th>') +
-    cols.map((c) => `<th data-sort="${c.k}" title="${c.title}" class="sortable${c.k === key ? ' on' : ''}">${c.label}${c.k === key ? (dir < 0 ? ' ▼' : ' ▲') : ''}</th>`).join('') + '</tr>' +
-    rows.map((r, i) => `<tr><td>${i + 1}</td><td>${tierCell(r)}</td>
-      <td style="text-align:left;white-space:nowrap">${ico('units', r.unit)}${r.unit}${r.flag ? ' <span title="Has an effect the model does not count">⚑</span>' : ''}<div class="muted">${r.build.reforge} · ${r.build.tier}/${D.upgrades[r.unit].length - 1}${RANK_TIER[r.unit] != null ? ' <span title="Scored at its best form, not max upgrade">★</span>' : ''}</div></td>
-      <td>${bars(r)}</td>
-      ${base ? '' : `<td class="gearCell" title="${fxGear(r.build).join(', ')}">${gearIcons(r.build)}</td>`}` +
-      cols.map((c) => `<td class="${c.k === key ? 'on' : ''}">${
-        c.k === 'lucky' ? `${fmt(r.lucky, 1)} <span class="muted">×${fmt(r.luck, 2)}</span>`
-        : c.k === 'overall' ? fmt(r.overall, 1)
-        : c.k === 'eff' ? `<span title="DPS per 1k mana by tier: ${(r.effTiers || []).map((x) => `${x.t}: ${Number.isFinite(x.e) ? fmt(x.e, 1) : 'free (not counted)'}`).join(' · ')}">${fmt(r.eff, 1)}${(r.effTiers || []).some((x) => !Number.isFinite(x.e)) ? ' <span class="muted">paid tiers</span>' : ''}</span>`
-        : c.k === 'rangeScore' ? (r.invertedRange ? `${fmt(r.maxRng, 1)} <span class="muted">↓ reverse</span>` : fmt(r.maxRng, 1))
-        : (c.k === 'cost30' || c.k === 'cost50') && !Number.isFinite(r[c.k]) ? '—'
-        : c.k === 'crowd' ? `${fmt(r.medium, 1)}${r.control ? ` <span class="muted" title="Enemy-seconds frozen per second (Confusion) with ${r.controlGear}">❄ ${fmt(r.control, 2)}</span>` : ''}`
-        : c.k === 'rng' && r.short ? `<span class="down" title="Can't reach ${RANK_MIN_RNG} RNG with any gear">${fmt(r.rng, 1)} ⚠</span>`
-        : fmt(r[c.k], c.d)}</td>`).join('') +
-      '</tr>').join('');
+  const best = cmpGear === 'best';
+  const cell = (r, c) => {
+    if (c.k === 'chain') return r.chain ? `${r.chain} <span class="muted">${fmt(r.preserve * 100, 0)}%</span>` : '<span class="muted">—</span>';
+    if ((c.k === 'splash' || c.k === 'pen') && !r[c.k]) return '<span class="muted">—</span>';
+    return fmt(r[c.k], c.d);
+  };
+  $('cmpTable').innerHTML = '<tr><th style="text-align:left">Tower</th>' + (best ? '<th style="text-align:left">Gear</th>' : '') +
+    CMP_COLS.map((c) => `<th data-sort="${c.k}" title="${c.title}" class="sortable${c.k === key ? ' on' : ''}">${c.label}${c.k === key ? (dir < 0 ? ' ▼' : ' ▲') : ''}</th>`).join('') +
+    '<th style="text-align:left">Specials</th></tr>' +
+    rows.map((r) => `<tr>
+      <td style="text-align:left;white-space:nowrap">${ico('units', r.unit)}${r.unit}<div class="muted">${r.build.reforge} · ${r.tier}/${r.maxTier}</div></td>
+      ${best ? `<td class="gearCell" title="${fxGear(r.build).join(', ')}">${[ico('weapons', r.build.weapon), ico('armors', r.build.helmet), ico('armors', r.build.chest), ico('armors', r.build.boots), ...r.build.acc.map((a) => ico('accessories', a))].join('')}</td>` : ''}` +
+      CMP_COLS.map((c) => `<td class="${c.k === key ? 'on' : ''}">${cell(r, c)}</td>`).join('') +
+      `<td style="text-align:left" class="muted">${r.specials.join(' · ') || '—'}</td></tr>`).join('');
+}
+
+// ---------- banners ----------
+// Banners the damage model uses keep their existing account keys (single source of truth for calc.js);
+// every other banner is tracked in account.banners for collection / planning.
+const BANNER_KEY = {
+  'Sand Slime': 'sandSlime', 'Storm Hatchling': 'stormHatchling', 'Wandering Eye Fish': 'wanderingEyeFish',
+  'Desert Scourge': 'desertScourge', 'Spiked Slime': 'spikedSlime', 'Patchwerk': 'patchwerk', 'Ice Bat': 'iceBat',
+  'Undead Viking': 'undeadViking', 'King Slime': 'kingSlime', 'Eye of Cthulhu': 'eyeOfCthulhu',
+  'Frozen Zombie': 'frozenZombie', 'Ice Slime': 'iceSlime', 'Cyan Beetle': 'cyanBeetle',
+};
+const bannerName = (r) => String(r.banner || '').replace(/\s*Banner$/, '');
+const bannerOwned = (n) => (BANNER_KEY[n] ? !!account[BANNER_KEY[n]] : !!account.banners?.[n]);
+function setBanner(n, on) {
+  if (BANNER_KEY[n]) account[BANNER_KEY[n]] = on;
+  else { account.banners ??= {}; if (on) account.banners[n] = true; else delete account.banners[n]; }
+  store.set('ttd.account', account);
+}
+function renderBanners() {
+  const all = D.banners || [];
+  const q = ($('bannerSearch').value || '').trim().toLowerCase();
+  const list = all.filter((r) => !q || bannerName(r).toLowerCase().includes(q) || String(r.effect).toLowerCase().includes(q));
+  $('bannerGrid').innerHTML = list.map((r) => {
+    const n = bannerName(r), on = bannerOwned(n), ic = ICONS.banners?.[n] || ICONS.enemies?.[n];   // real banner art, else the enemy sprite
+    const effect = r.verified_effect || r.effect || '';
+    return `<button type="button" class="bannerTile${on ? ' on' : ''}" data-banner="${n}" title="${on ? 'Owned' : 'Not owned'}">
+      ${ic ? `<img src="${encodeURI(ic)}" alt="">` : '<span class="noimg"></span>'}
+      <span class="bText"><span class="bName">${n}${BANNER_KEY[n] ? ' <span class="badge" title="Used by the damage model">⚔ DPS</span>' : ''}</span>
+        <span class="bEffect">${effect}</span></span>
+      <span class="bDot" aria-label="${on ? 'owned' : 'not owned'}"></span>
+    </button>`;
+  }).join('') || '<p class="muted">No banners match that search.</p>';
+  const owned = all.filter((r) => bannerOwned(bannerName(r))).length;
+  $('bannerCount').innerHTML = `<span style="width:${all.length ? (owned / all.length) * 100 : 0}%"></span><b>${owned}/${all.length} Banners</b>`;
 }
 
 // ---------- achievements ----------
@@ -1320,40 +1187,34 @@ function saveBuildToTeam() {
   render();
 }
 
-const COLORS = ['#ffd93d', '#6cf06a', '#7fe3ff', '#ff8fb1', '#d7a6ff', '#ffa45c', '#ffffff'];
+// Team palette: gold = team total; the rest are tuned to sit well on the indigo theme (no pure white)
+const COLORS = ['#ffd93d', '#7fe3ff', '#6cf06a', '#ff8fb1', '#c3a6ff', '#ffa45c', '#9fb4ff'];
 
 let chartHidden = new Set(store.get('ttd.chartHidden', []));
 function chartSeries(cur, f) {
   const members = teamMembers();
   const per = members.map((m, k) => {
     const st = stats(m.b, f.fight);
-    return { label: `${m.b.unit} ×${m.t.placements}`, slot: m.slot, s: [st], color: COLORS[(k + 1) % COLORS.length], width: 2,
+    return { label: `${m.b.unit} ×${m.t.placements}`, unit: m.b.unit, slot: m.slot, s: [st], color: COLORS[(k + 1) % COLORS.length], width: 2.25,
              fns: [(d) => realDPS(st, { ...f.enemy, DEF: d }, f.opts) * m.t.placements] };
   });
   if (!per.length) return [];
   const shown = per.filter((p) => !chartHidden.has(p.slot));
-  const total = { label: 'Team total', color: COLORS[0], width: 4, s: per.flatMap((p) => p.s), fns: shown.flatMap((p) => p.fns) };
+  const total = { label: 'Team total', total: true, color: COLORS[0], width: 4, s: per.flatMap((p) => p.s), fns: shown.flatMap((p) => p.fns) };
   return [total, ...shown];
 }
+// "Nice" axis step: 1 / 2 / 2.5 / 5 × 10^n
+function niceStep(max, ticks = 5) {
+  const raw = max / ticks, p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p;
+  return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p;
+}
+let chartCache = null, chartHover = null;   // computed lines + layout, reused for hover redraws
 function drawChart(cur, f) {
-  const cv = $('chart'), ctx = cv.getContext('2d');
-  // Draw at the screen's real pixel density so lines and text stay sharp (no blurry upscaling)
-  const dpr = window.devicePixelRatio || 1;
-  const W = Math.max(320, cv.clientWidth || cv.parentElement.clientWidth - 40), H = Math.round(Math.min(460, Math.max(300, W * 0.42)));
-  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) {
-    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
-  }
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const pad = { l: 58, r: 20, t: 16, b: 62 };
-  ctx.clearRect(0, 0, W, H);
+  const cv = $('chart');
   renderChartTeam(f);
   const series = chartSeries(cur, f);
-  const css = getComputedStyle(document.documentElement);
-  if (!series.length) {
-    ctx.fillStyle = css.getPropertyValue('--chart-text').trim(); ctx.font = '16px system-ui';
-    ctx.textAlign = 'center'; ctx.fillText('Add towers to your Team to see the chart', W / 2, H / 2); ctx.textAlign = 'left';
-    $('legend').innerHTML = ''; return;
-  }
+  const W = Math.max(320, cv.clientWidth || cv.parentElement.clientWidth - 40), H = Math.round(Math.min(480, Math.max(300, W * 0.44)));
+  if (!series.length) { chartCache = { empty: true, W, H }; paintChart(); $('legend').innerHTML = ''; return; }
   // x range: just past the point where every line has flattened out at its minimum-damage floor
   const at = (x, d) => x.fns.reduce((t, fn) => t + fn(d), 0);
   let flat = 0;
@@ -1361,52 +1222,115 @@ function drawChart(cur, f) {
     const floorV = at(x, 400);
     for (let d = 400; d >= 0; d -= 1) if (at(x, d) > floorV * 1.005 + 1e-9) { flat = Math.max(flat, d + 1); break; }
   }
-  const capDef = Math.min(Math.max(20, Math.ceil(flat * 1.15)), 400);
-  const step = Math.max(0.25, capDef / 300);
-  const pts = series.map((x) => {
-    const arr = [];
-    for (let d = 0; d <= capDef; d += step) arr.push([d, x.fns.reduce((t, fn) => t + fn(d), 0)]);
-    return arr;
-  });
-  const maxY = Math.max(1, ...pts.flat().map((p) => p[1])) * 1.08;
-  const X = (d) => pad.l + (d / capDef) * (W - pad.l - pad.r);
-  const Y = (v) => H - pad.b - (v / maxY) * (H - pad.t - pad.b);
-
-  ctx.strokeStyle = css.getPropertyValue('--chart-grid').trim(); ctx.fillStyle = css.getPropertyValue('--chart-text').trim();
-  ctx.font = '13px system-ui, sans-serif'; ctx.lineWidth = 1; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-  for (let i = 0; i <= 5; i++) {
-    const v = (maxY / 5) * i, y = Y(v);
-    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
-    ctx.fillText(fmt(v, 0), pad.l - 10, y);
-  }
-  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  for (let i = 0; i <= 5; i++) { const d = (capDef / 5) * i; ctx.fillText(fmt(d, 0), X(d), H - pad.b + 10); }
-  ctx.font = '600 13px system-ui, sans-serif';
-  ctx.fillText('Enemy DEF →', pad.l + (W - pad.l - pad.r) / 2, H - pad.b + 32);
-  ctx.save(); ctx.translate(16, pad.t + (H - pad.t - pad.b) / 2); ctx.rotate(-Math.PI / 2);
-  ctx.fillText('DPS', 0, -6); ctx.restore();
-  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-
-  const vline = (d, color) => {
-    if (d > capDef) return;
-    ctx.strokeStyle = color; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(X(d), pad.t); ctx.lineTo(X(d), H - pad.b); ctx.stroke(); ctx.setLineDash([]);
-  };
-  vline(f.enemy.DEF, '#ff7676');
+  const xStep = niceStep(Math.min(Math.max(20, Math.ceil(flat * 1.15)), 400));
+  const capDef = Math.ceil(Math.min(Math.max(20, Math.ceil(flat * 1.15)), 400) / xStep) * xStep;
+  const step = Math.max(0.25, capDef / 320);
+  const pts = series.map((x) => { const a = []; for (let d = 0; d <= capDef + 1e-9; d += step) a.push([d, at(x, d)]); return a; });
+  const peak = Math.max(1, ...pts.flat().map((p) => p[1]));
+  const yStep = niceStep(peak * 1.05), maxY = Math.ceil(peak * 1.05 / yStep) * yStep;
   const mix = actMix();
+  const markers = [{ d: f.enemy.DEF, color: '#ff7676', label: `Enemy DEF ${fmt(f.enemy.DEF, 0)}` }];
   if (mix && mix.length) {
-    const n = mix.reduce((t, m) => t + m.count, 0);
-    vline(mix.reduce((t, m) => t + m.count * m.DEF, 0) / n, '#ffd93d');
+    const n = mix.reduce((t, m) => t + m.count, 0), avg = mix.reduce((t, m) => t + m.count * m.DEF, 0) / n;
+    markers.push({ d: avg, color: '#ffd93d', label: `Act avg ${fmt(avg, 1)}` });
   }
-
-  pts.forEach((arr, i) => {
-    ctx.strokeStyle = series[i].color; ctx.lineWidth = series[i].width;
-    ctx.beginPath();
-    arr.forEach(([d, v], j) => (j ? ctx.lineTo(X(d), Y(v)) : ctx.moveTo(X(d), Y(v))));
-    ctx.stroke();
-  });
-  $('legend').innerHTML = series.map((x) => `<span style="--c:${x.color}">${x.label}</span>`).join('');
+  chartCache = { W, H, series, pts, capDef, xStep, maxY, yStep, markers, step };
+  paintChart();
+  const icon = (n) => (n && ICONS.units?.[n] ? `<img class="ico" src="${encodeURI(ICONS.units[n])}" alt="">` : '');
+  $('legend').innerHTML = series.map((x) => `<span class="${x.total ? 'total' : ''}" style="--c:${x.color}">${icon(x.unit)}${x.label}</span>`).join('');
+}
+function paintChart() {
+  const C = chartCache; if (!C) return;
+  const cv = $('chart'), ctx = cv.getContext('2d');
+  const dpr = window.devicePixelRatio || 1, { W, H } = C;   // draw at real pixel density: crisp lines and text
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) {
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+  const css = getComputedStyle(document.documentElement), txt = css.getPropertyValue('--chart-text').trim() || '#c9d1ff';
+  const font = (w, s) => `${w} ${s}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+  const pad = { l: 62, r: 22, t: 34, b: 56 };
+  const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
+  // plot panel
+  const rr = (x, y, w, h, r) => { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); };
+  const bg = ctx.createLinearGradient(0, pad.t, 0, pad.t + ph);
+  bg.addColorStop(0, '#1c235c'); bg.addColorStop(1, '#141a48');
+  rr(pad.l, pad.t, pw, ph, 10); ctx.fillStyle = bg; ctx.fill();
+  ctx.strokeStyle = 'rgba(120,140,255,.35)'; ctx.lineWidth = 1; ctx.stroke();
+  if (C.empty) {
+    ctx.fillStyle = txt; ctx.font = font(600, 15); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('Add towers to your Team to see the chart', pad.l + pw / 2, pad.t + ph / 2); return;
+  }
+  const X = (d) => pad.l + (d / C.capDef) * pw, Y = (v) => pad.t + ph - (v / C.maxY) * ph;
+  // grid + axis labels
+  ctx.save(); rr(pad.l, pad.t, pw, ph, 10); ctx.clip();
+  ctx.strokeStyle = 'rgba(160,175,255,.14)'; ctx.setLineDash([3, 5]);
+  for (let v = C.yStep; v < C.maxY - 1e-9; v += C.yStep) { ctx.beginPath(); ctx.moveTo(pad.l, Y(v)); ctx.lineTo(pad.l + pw, Y(v)); ctx.stroke(); }
+  for (let d = C.xStep; d < C.capDef - 1e-9; d += C.xStep) { ctx.beginPath(); ctx.moveTo(X(d), pad.t); ctx.lineTo(X(d), pad.t + ph); ctx.stroke(); }
+  ctx.setLineDash([]);
+  // area under the team total
+  const tot = C.pts[0], grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + ph);
+  grad.addColorStop(0, 'rgba(255,217,61,.28)'); grad.addColorStop(1, 'rgba(255,217,61,0)');
+  ctx.beginPath(); ctx.moveTo(X(tot[0][0]), Y(0)); tot.forEach(([d, v]) => ctx.lineTo(X(d), Y(v))); ctx.lineTo(X(tot[tot.length - 1][0]), Y(0)); ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+  // markers
+  for (const m of C.markers) {
+    if (m.d > C.capDef) continue;
+    ctx.strokeStyle = m.color; ctx.globalAlpha = .85; ctx.lineWidth = 1.5; ctx.setLineDash([5, 5]);
+    ctx.beginPath(); ctx.moveTo(X(m.d), pad.t); ctx.lineTo(X(m.d), pad.t + ph); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+  }
+  // lines: towers first, team total last (on top, with a soft glow)
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  for (let i = C.pts.length - 1; i >= 0; i--) {
+    const s = C.series[i];
+    ctx.strokeStyle = s.color; ctx.lineWidth = s.width;
+    if (s.total) { ctx.shadowColor = 'rgba(255,217,61,.55)'; ctx.shadowBlur = 10; }
+    ctx.beginPath(); C.pts[i].forEach(([d, v], j) => (j ? ctx.lineTo(X(d), Y(v)) : ctx.moveTo(X(d), Y(v)))); ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+  ctx.restore();
+  // marker pills above the plot
+  ctx.font = font(700, 11); ctx.textBaseline = 'middle';
+  let lastRight = -Infinity;
+  for (const m of [...C.markers].sort((a, b) => a.d - b.d)) {
+    if (m.d > C.capDef) continue;
+    const w = ctx.measureText(m.label).width + 14, x = Math.min(Math.max(X(m.d) - w / 2, pad.l, lastRight + 6), pad.l + pw - w);
+    rr(x, pad.t - 24, w, 18, 9); ctx.fillStyle = m.color; ctx.fill();
+    ctx.fillStyle = '#141a48'; ctx.textAlign = 'left'; ctx.fillText(m.label, x + 7, pad.t - 15);
+    lastRight = x + w;
+  }
+  // axes text
+  ctx.fillStyle = txt; ctx.font = font(500, 12);
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let v = 0; v <= C.maxY + 1e-9; v += C.yStep) ctx.fillText(fmt(v, 0), pad.l - 10, Y(v));
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  for (let d = 0; d <= C.capDef + 1e-9; d += C.xStep) ctx.fillText(fmt(d, d % 1 ? 1 : 0), X(d), pad.t + ph + 8);
+  ctx.font = font(700, 12); ctx.fillStyle = '#e6eaff';
+  ctx.fillText('Enemy DEF', pad.l + pw / 2, pad.t + ph + 30);
+  ctx.save(); ctx.translate(18, pad.t + ph / 2); ctx.rotate(-Math.PI / 2); ctx.textBaseline = 'middle'; ctx.fillText('DPS', 0, 0); ctx.restore();
+  // hover: crosshair + tooltip with every line's DPS at that DEF
+  if (chartHover != null && chartHover >= 0 && chartHover <= C.capDef) {
+    const i = Math.round(chartHover / C.step), d = C.pts[0][Math.min(i, C.pts[0].length - 1)][0], x = X(d);
+    ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + ph); ctx.stroke();
+    const rows = C.series.map((s, k) => ({ s, v: C.pts[k][Math.min(i, C.pts[k].length - 1)][1] }));
+    for (const r of rows) { ctx.beginPath(); ctx.arc(x, Y(r.v), r.s.total ? 4.5 : 3.5, 0, Math.PI * 2); ctx.fillStyle = r.s.color; ctx.fill();
+      ctx.strokeStyle = '#141a48'; ctx.lineWidth = 1.5; ctx.stroke(); }
+    ctx.font = font(600, 12);
+    const lines = [`DEF ${fmt(d, d % 1 ? 1 : 0)}`, ...rows.map((r) => `${r.s.label}: ${fmt(r.v, 1)}`)];
+    const tw = Math.max(...lines.map((l) => ctx.measureText(l).width)) + 34, th = lines.length * 18 + 12;
+    let tx = x + 12; if (tx + tw > pad.l + pw) tx = x - 12 - tw;
+    const ty = pad.t + 8;
+    rr(tx, ty, tw, th, 8); ctx.fillStyle = 'rgba(14,18,52,.94)'; ctx.fill(); ctx.strokeStyle = 'rgba(120,140,255,.5)'; ctx.stroke();
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    lines.forEach((l, k) => {
+      const yy = ty + 15 + k * 18;
+      if (k) { ctx.fillStyle = rows[k - 1].s.color; ctx.fillRect(tx + 10, yy - 2, 12, 4); }
+      ctx.fillStyle = k ? '#ffffff' : '#ffd93d'; ctx.fillText(l, tx + (k ? 28 : 10), yy);
+    });
+  }
 }
 // per-tower controls under the chart (share state with the Team section)
 function renderChartTeam(f) {
@@ -1724,12 +1648,12 @@ function renderPlan(f) {
 const VIEWS = [
   { id: 'build', label: 'Build', sections: ['build', 'fight', 'results', 'optCard'], icon: ['weapons', 'Copper Shortsword'] },
   { id: 'team', label: 'Team', sections: ['teamCard'], icon: ['units', 'Guide'] },
-  { id: 'rank', label: 'Towers Ranked', sections: ['rankCard'], icon: ['consumables', 'Golden Crate'] },
+  { id: 'compare', label: 'Compare Towers', sections: ['compareCard'], icon: ['consumables', 'Golden Crate'] },
   { id: 'fantasy', label: 'Fantasy Teams', sections: ['fantasyCard'], icon: ['accessories', 'Gold Crown'] },
   { id: 'act', label: 'Act Analysis', sections: ['actCard'], icon: ['enemies', 'Eye of Cthulhu'] },
   { id: 'plan', label: 'Mana Planner', sections: ['planCard'], icon: ['consumables', 'Mana Crystal'] },
   { id: 'chart', label: 'DPS vs. Enemy Defense', sections: ['chartCard'], icon: ['accessories', 'Shark Tooth Necklace'] },
-  { id: 'acct', label: 'Account Buffs', sections: ['acctCard', 'whipCard'], icon: ['consumables', 'Seafood Dinner'] },
+  { id: 'acct', label: 'Account Buffs', sections: ['acctCard', 'bannerCard'], icon: ['consumables', 'Seafood Dinner'] },
   { id: 'ach', label: 'Achievements', sections: ['achCard'], icon: ['accessories', 'Platinum Crown'] },
 ];
 function buildNav() {
@@ -1744,13 +1668,13 @@ function buildNav() {
   showView(store.get('ttd.view', 'build'));
 }
 function showView(id) {
+  if (id === 'rank') id = 'compare';   // Towers Ranked became Compare Towers
   const v = VIEWS.find((x) => x.id === id) || VIEWS[0];
   for (const x of VIEWS) for (const sid of x.sections) { const el = $(sid); if (el) el.hidden = x !== v; }
   document.querySelectorAll('#side button').forEach((b) => b.classList.toggle('on', b.dataset.view === v.id));
   store.set('ttd.view', v.id);
-  if (v.id === 'chart' && D) render();
-  // fill the leaderboard on first open (start-up runs it itself once the Act / Fight panels are restored)
-  if (v.id === 'rank' && appReady && !rankRows && !$('rankRun').disabled) runRanking();
+  if (v.id === 'chart' && appReady) render();   // not during start-up: the Build panel isn't filled in yet
+  if (v.id === 'compare' && appReady && !cmpRows) runCompare();   // fill the table on first open
   window.scrollTo({ top: 0 });
 }
 

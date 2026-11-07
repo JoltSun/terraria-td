@@ -36,7 +36,8 @@ LISTS = {'Units': 'units', 'Accessories': 'accessories', 'Weapons': 'weapons', '
          'Whips': 'whips', 'Enemies': 'enemies', 'Consumables': 'consumables', 'Achievements': 'achievements'}
 
 def safe(name):
-    return re.sub(r'[<>:"/\\|?*]', '', name).strip()
+    # apostrophes become underscores ("Zephyr's Grip" -> "Zephyr_s Grip"): safe in URLs and across Mac/PC sync
+    return re.sub(r'[<>:"/\\|?*]', '', name).replace("'", "_").replace("’", "_").strip()
 
 def main():
     board = json.load(open(os.path.join(HERE, 'board.json'), encoding='utf-8'))
