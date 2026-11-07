@@ -5,7 +5,7 @@
 (AI-generated slop project lmao)
 
 > Unofficial fan project by **JoltSun**. Not affiliated with Re-Logic or the Terraria Tower Defense developers.
-> Base game data comes from the community [Terraria TD Remastered Trello board](https://trello.com/b/p9kIzWV6/terraria-td-remastered);
+> Game data comes from [Terraria TD Remastered Trello board](https://trello.com/b/p9kIzWV6/terraria-td-remastered);
 > corrections from in-game testing live in `tools/overrides.csv`.
 
 Local calculator for Terraria Tower Defense Remastered: build a unit, pick an enemy, see real DPS.
