@@ -137,9 +137,10 @@ export function screenDPS(s) {
 // enemy = { DEF, maxHP };  opts = { whip, targets, pelletsHit, whipCrits }
 export function damagePerAttack(s, enemy, opts = {}) {
   const { whip = 0, targets = 1, pelletsHit = s.pellets, whipCrits = false, density = null, clump = 8,
-          spawnCrowd = false, badLuck = 0, chainTargets = Infinity } = opts;
-  // a chain bounces to the NEXT enemy in line — it never hits the same enemy twice, so it's capped by how many are there
-  const chains = Math.max(1, Math.min(s.chains, chainTargets));
+          spawnCrowd = false, badLuck = 0, chainTargets = targets } = opts;
+  // A chain bounces to the NEXT enemy in line and never revisits one, so it's capped by the enemies available:
+  // 1 enemy → only the first hit; n enemies → min(Max Chain, n) hits. Defaults to the "Enemies available" count.
+  const chains = Math.max(1, Math.min(s.chains, Math.floor(chainTargets) || 1));
   // Bad Luck (Black Cat's 3s debuff): the enemy takes crits more often — adds to every tower's crit chance, cap 100%
   const cc = Math.min(1, s.critChance + badLuck);
   // Penetration / banner ignores are subtracted first, then the unit's defense multiplier applies
@@ -167,7 +168,7 @@ export function damagePerAttack(s, enemy, opts = {}) {
   //  - density given (enemies per splash-unit of lane): radius r covers ~2r of lane, which holds ~density·2r
   //    enemies — the target included, so no "+1". Floor 1 (the target), cap at the clump size.
   //    Fitted to in-game impact counts (Forest Master Blood Moon: Splash 2/4/8 ≈ 1.5/3/6). Globe uses RNG as r.
-  //  - otherwise: the fixed `targets` count (Build panel's "Targets in AoE").
+  //  - otherwise: the fixed `targets` count ("Enemies available").
   let aoe = 1;
   if (s.Splash > 0 || s.Globe > 0) {
     const r = s.Globe > 0 ? s.RNG : s.Splash;

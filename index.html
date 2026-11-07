@@ -20,7 +20,9 @@
       <label>Unit <select id="unit"></select></label>
       <label>Upgrade tier <select id="tier"></select></label>
       <label>Level <input id="level" type="number" min="1" max="45" value="45"></label>
-      <label>Reforge <select id="reforge"></select></label>
+      <label>Reforge
+        <div class="selwrap"><img id="reforgePreview" class="ico" alt=""><select id="reforge"></select></div>
+      </label>
     </div>
 
     <h3>Weapon &amp; armor</h3>
@@ -43,7 +45,7 @@
       <label>Enemy <select id="enemy"></select></label>
       <label>Enemy DEF <input id="def" type="number" min="0" value="0"></label>
       <label title="Only used by % max-HP units (Digtoise, Flinx). Enemy HP scales by wave, so enter what you see in-game.">Enemy max HP (for % dmg) <input id="hp" type="number" min="0" value="100"></label>
-      <label title="Enemies inside Splash (around impact) or Globe (around tower)">Targets in AoE <input id="targets" type="number" min="1" value="1"></label>
+      <label title="Distinct enemies the tower can reach. Chain: max different enemies hit (1 = first hit only). Splash/Globe: enemies caught by the AoE. Other towers: no effect.">Enemies available <input id="targets" type="number" min="1" value="1"></label>
       <label title="Houndius: ~1 long range, 1–2 mid, all close">Pellets landing <input id="pellets" type="number" min="1" value="3"></label>
       <label title="Lock-on units (Suspicious Eye) stay on one target until it dies, then pause 1s. Strong = it picks the tankiest enemy, so the pause rarely matters; First = it fights whatever is in front.">Lock-on targeting
         <select id="fLockOn">
@@ -79,7 +81,7 @@
     <div id="warnings" class="warnings"></div>
     <div class="row">
       <select id="teamSlotPick" aria-label="Team slot"></select>
-      <button id="saveToTeam">Save build to team</button>
+      <button id="saveToTeam" class="primary">Save build to team</button>
       <span id="saveToTeamMsg" class="muted"></span>
     </div>
   </section>
@@ -118,44 +120,46 @@
       </label>
       <div id="exclChips" class="chips"></div>
     </div>
-    <div class="row"><button id="optRun">Find best loadout</button><span id="optStatus" class="muted" style="align-self:center"></span></div>
+    <div class="row"><button id="optRun" class="primary">Find best loadout</button><span id="optStatus" class="muted" style="align-self:center"></span></div>
     <table id="optTable" class="tbl" style="margin-top:10px"></table>
   </section>
 
   <!-- ============ TEAM ============ -->
   <section class="card wide" id="teamCard">
-    <h2>Team</h2>
+    <h2>Team &amp; Defense</h2>
     <p class="muted">5 tower slots. "Set from Build" copies the Build panel into a slot; "Edit" loads a slot back into the Build panel.
-      Each slot has its own upgrade tier and number of placements. DPS is against the act picked below, or the enemy in Enemy Select if no act is picked.</p>
+      Each slot has its own upgrade tier and number of placements. Merchant and Star Merchant are treated as economy/support and excluded from combat DPS.</p>
     <div class="loadoutBar">
       <input id="loadoutName" type="text" placeholder="Loadout name">
-      <button id="saveLoadout">Save loadout</button>
+      <button id="saveLoadout" class="primary">Save loadout</button>
       <select id="loadoutPick"></select>
       <button id="loadLoadout" class="ghost">Load</button>
-      <button id="deleteLoadout" class="ghost">Delete</button>
+      <button id="deleteLoadout" class="danger">Delete</button>
     </div>
+    <p id="teamNotice" class="teamNotice" role="status" hidden></p>
     <div id="teamStats" class="stats"></div>
     <div id="teamSlots" class="teamSlots"></div>
+    <div class="defenseLab">
+      <div>
+        <h3>DPS vs. Enemy Defense</h3>
+        <p class="muted">Set a DEF value to see the attacking Team's live DPS. The graph shows every attacking tower across the full defense range.</p>
+      </div>
+      <label>Enemy DEF <input id="teamDef" type="number" min="-5" max="40" value="0"></label>
+      <input id="teamDefRange" type="range" min="-5" max="40" value="0" aria-label="Enemy DEF slider">
+    </div>
+    <canvas id="chart" width="900" height="360"></canvas>
+    <div id="legend" class="legend"></div>
   </section>
 
   <!-- ============ MANA PLANNER ============ -->
   <section class="card wide" id="planCard">
     <h2>Mana Planner</h2>
-    <p class="muted">Plans the cheapest-first path to your Team: what to place and upgrade, in what order, for the most DPS per mana.
-      Your Team slots set the targets (upgrade level and placements). DPS is against the act picked in Act analysis, or the enemy in Enemy Select.</p>
-    <div class="grid3">
-      <label>Starting mana <input id="planStart" type="number" min="0" value="324"></label>
-      <label title="Mana Crystals give +0.4/s each (max 10); Flying Fish banner +0.5/s">Passive mana / sec <input id="planPassive" type="number" min="0" step="0.1" value="4.5"></label>
-      <label title="Only matters for passive income. Waves often end in seconds, so leave 0 if unsure">Seconds per wave (avg) <input id="planWaveSec" type="number" min="0" value="0"></label>
-      <label title="Blue Slime banner">+2 mana per kill <input id="planKill2" type="checkbox" checked></label>
-      <label title="Demon Eye banner">+3 mana per flying kill <input id="planFly3" type="checkbox" checked></label>
-      <label title="Deerclops banner">+50 mana per wave cleared <input id="planWave50" type="checkbox" checked></label>
-    </div>
+    <p class="muted">Plans every placement and individual upgrade needed to reach your Team targets, ordered by output per mana.
+      Starting mana highlights what you can afford immediately. Combat towers contribute Team DPS; Merchant and Star Merchant
+      contribute Mana/s instead. DPS is scored against the act picked in Act Analysis, or the enemy in Enemy Select.</p>
+    <div class="grid3"><label>Starting mana <input id="planStart" type="number" min="0" value="324"></label></div>
     <div id="planStats" class="stats" style="margin-top:12px"></div>
-    <div class="twocol">
-      <div><h3>Buy order</h3><table id="planOrder" class="tbl"></table></div>
-      <div><h3>By wave <span class="muted">(assumes the act's enemies are spread evenly across waves)</span></h3><table id="planWaves" class="tbl"></table></div>
-    </div>
+    <h3>Buy order</h3><table id="planOrder" class="tbl"></table>
   </section>
 
   <!-- ============ ACT ============ -->
@@ -166,30 +170,25 @@
       <label>Difficulty
         <select id="diff"><option>Journey</option><option>Classic</option><option>Expert</option><option>Master</option></select>
       </label>
-      <label>Rank accessories for <select id="rankTower"></select></label>
-      <label>Accessory slot to swap <select id="rankSlot"></select></label>
     </div>
     <p class="muted">Enemy counts are from one recorded run per act on the Trello board, so treat them as typical, not exact.
-      Team Act DPS = every tower in your Team (× its placements) against each enemy (its own DEF and type tags), averaged by how many of that enemy spawn.
-      Enemy HP isn't used because it scales by wave; % max-HP units use the HP you type in Enemy Select.</p>
+      Team Act DPS uses attacking towers against each enemy's DEF and type tags, weighted by how many spawn.
+      HP-dependent effects remain approximate because enemy HP scales by wave.</p>
     <div id="actStats" class="stats"></div>
     <div class="twocol">
       <div><h3>Enemy mix</h3><table id="actTable" class="tbl"></table></div>
-      <div><h3 id="rankTitle">Best accessory vs this act</h3><table id="rankTable" class="tbl"></table></div>
+      <div>
+        <h3 id="rankTitle">Best accessory vs this act</h3>
+        <div class="grid2 actRankControls">
+          <label>Rank for <select id="rankTower"></select></label>
+          <label>Slot to swap <select id="rankSlot"></select></label>
+        </div>
+        <table id="rankTable" class="tbl"></table>
+      </div>
     </div>
     <h3>Team in this act</h3>
-    <p class="muted">Each tower from the Team section at its upgrade level and placement count.</p>
+    <p class="muted">Attacking towers from Team &amp; Defense at their selected upgrade levels and placement counts.</p>
     <table id="buildsTable" class="tbl"></table>
-  </section>
-
-  <!-- ============ CHART ============ -->
-  <section class="card wide" id="chartCard">
-    <h2>DPS vs. Enemy Defense</h2>
-    <p class="muted">Each tower's line is its DPS × placements. Uses the Enemy Select settings (targets, whip, HP, situational buffs).
-      Hover the chart to read every line at a given DEF.</p>
-    <canvas id="chart" width="900" height="360"></canvas>
-    <div id="legend" class="legend"></div>
-    <div id="chartTeam" class="chartTeam"></div>
   </section>
 
   <!-- ============ COMPARE TOWERS ============ -->
@@ -232,7 +231,7 @@
         </span>
       </label>
       <label>Mana budget <input id="fxBudget" type="number" min="0" step="100" placeholder="blank = unlimited"></label>
-      <label>&nbsp;<button id="fxRun">Build fantasy team</button></label>
+      <label>&nbsp;<button id="fxRun" class="primary">Build fantasy team</button></label>
     </div>
     <label class="fxRealisticRow" title="Treat ultra-rare items (no repeatable source: sub-1% drops, one-time rewards, extremely rare fishing) as one copy, so only one tower can wear each.">
       <input type="checkbox" id="fxRealistic"> Realistic rarity <span class="muted">(ultra-rare items get limited copies: Arkhalis ×1, Balloon Pufferfish ×3)</span>
@@ -253,7 +252,7 @@
     <p id="fxStatus" class="muted"></p>
     <div id="fxStats" class="stats"></div>
     <div id="fxSlots" class="teamSlots"></div>
-    <div class="row" id="fxLoadRow" hidden><button id="fxLoad">Load into my Team</button></div>
+    <div class="row" id="fxLoadRow" hidden><button id="fxLoad" class="primary">Load into my Team</button></div>
     <p class="muted"><b>Underrated:</b> burn/frostburn ticks, ricochet, knockback, and stun aren't modeled, so towers that lean on them rank lower than they should.
       Gear is searched at each tower's max tier and reused at lower tiers. Each unit appears at most once per team (use placements for copies).
       Re-gear on a card re-optimizes only that tower (the others keep their one-copy items) and keeps its placements.</p>
@@ -262,7 +261,7 @@
   <!-- ============ ACCOUNT ============ -->
   <section class="card wide" id="acctCard">
     <h2>Account Buffs</h2>
-    <div class="acctWhip">
+    <div class="acctFeature acctWhip">
       <label>Equipped whip <select id="whip">
           <option value="0">None</option>
           <option value="1">Cobwhip (+1)</option>
@@ -271,8 +270,9 @@
         </select></label>
       <div id="whipInfo" class="whipInfo"></div>
     </div>
-    <div class="grid3">
+    <div class="acctFeature acctSeafood">
       <label>Seafood Dinners (0–400) <input id="seafood" type="number" min="0" max="400"></label>
+      <div id="seafoodInfo" class="whipInfo"></div>
     </div>
     <div class="checks" id="acctChecks"></div>
     <p class="muted">Your whip works like in-game: equip one and it stays on for every match, affecting every tower. Banners have their own panel below.
@@ -286,7 +286,7 @@
     <div class="bannerBar">
       <input id="bannerSearch" type="text" placeholder="Search banners or effects…">
       <button id="bannerAll" class="ghost">Select all</button>
-      <button id="bannerNone" class="ghost">Clear</button>
+      <button id="bannerNone" class="danger">Clear</button>
     </div>
     <div id="bannerGrid" class="bannerGrid"></div>
     <div id="bannerCount" class="bannerCount"></div>

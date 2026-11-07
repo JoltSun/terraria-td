@@ -10,6 +10,7 @@ const store = {
 let D, ICONS = {}, TAGS = {}, SPAWNS = [], BGS = {}, account = { ...DEFAULT_ACCOUNT, ...store.get('ttd.account', {}) };
 let team = store.get('ttd.team', [null, null, null, null, null]);
 let loadouts = store.get('ttd.loadouts', {});
+let repairedTeamDuplicates = [];
 // Items the optimizer must never pick. Copper Pickaxe starts excluded: it's currently unobtainable.
 let excluded = store.get('ttd.excluded', ['Copper Pickaxe']);
 // Items you can only own one of (badge rewards): Fantasy Teams gives each to at most one tower
@@ -67,9 +68,88 @@ function opts(sel, names, blank) {
     names.map((n) => `<option value="${n}">${n}</option>`).join('');
 }
 
+const reforgeIconPath = (name = 'None') => {
+  const file = name === 'None' ? 'NoReforge' : name;
+  return `icons/hammers/${file}HammerIcon.png`;
+};
+const reforgeHammer = (name = 'None') =>
+  `<img class="reforgeHammer" src="${encodeURI(reforgeIconPath(name))}" alt="${name} reforge" title="${name} reforge">`;
+
+const TOWER_CARD_BACKGROUNDS = {
+  'Slime Staff': 'backgrounds/Forest_background_2.webp',
+  'Finch Staff': 'backgrounds/Forest_background_16.webp',
+  'Guide': 'backgrounds/Forest_background_2.webp',
+  'Volt Bunny': 'backgrounds/Forest_background_16.webp',
+  'Flinx': 'backgrounds/Snow_biome_background_6.webp',
+  'Desert Acolyte': 'backgrounds/Desert_background_4.webp',
+  'Zoologist': 'backgrounds/forest_1.png',
+  'Painter': 'backgrounds/forest_1.png',
+  'Dye Trader': 'backgrounds/forest_2.gif',
+  'Slime Prince': 'backgrounds/Forest_background_2.webp',
+  'Chester': 'backgrounds/snow_1.png',
+  'Zephyr Fish': 'backgrounds/Ocean_background_2.webp',
+  'Digtoise': 'backgrounds/desert_2.png',
+  'Demolitionist': 'backgrounds/Cavern_background_9.webp',
+  'Golfer': 'backgrounds/Desert_background_3.png',
+  'Baby Ghost Bell': 'backgrounds/Desert_background_4.webp',
+  'Storm Cloud': 'backgrounds/desert_1.gif',
+  'Houndius Shootius': 'backgrounds/Snow_biome_background_10.webp',
+  'Vampire Frog': 'backgrounds/bloodmoon2.png',
+  'Bast Statue': 'backgrounds/desert_1.gif',
+  'Snow Launcher': 'backgrounds/snow_2.png',
+  'Suspicious Eye': 'backgrounds/Forest_background_2_NIGHT.webp',
+  'Merchant': 'backgrounds/forest_1.png',
+  'Star Merchant': 'backgrounds/Forest_background_16_NIGHT.webp',
+  'Black Cat': 'backgrounds/pumpkinguys.png',
+  'Squashling': 'backgrounds/pumpkinguys.png',
+  'Baby Dinosaur': 'backgrounds/Desert_background_3.png',
+  'Tiny Deerclops': 'backgrounds/Snow_biome_background_6.webp',
+};
+
+function towerCardVisual(g, level) {
+  const itemIcon = (cat, name) => ICONS[cat]?.[name]
+    ? `<img src="${encodeURI(ICONS[cat][name])}" alt="" title="${name}">` : '';
+  const portraitPath = ICONS.units?.[g.unit];
+  const portrait = portraitPath
+    ? `<img class="teamPortraitImg" src="${encodeURI(portraitPath)}" alt="${g.unit}">`
+    : '<span class="teamPortraitFallback" aria-hidden="true">?</span>';
+  const gear = [
+    ['weapons', g.weapon, 'Weapon'],
+    ['armors', g.helmet, 'Helmet'],
+    ['armors', g.chest, 'Chest'],
+    ['armors', g.boots, 'Boots'],
+    ...g.acc.map((a, n) => ['accessories', a, `Accessory ${n + 1}`]),
+  ].map(([cat, name, label]) => `<span class="teamGearSlot${name ? '' : ' empty'}" title="${name || `${label}: empty`}">
+    ${name ? itemIcon(cat, name) : ''}
+  </span>`).join('');
+  return `<div class="teamCardVisual">
+    <div class="teamTowerIdentity">
+      <div class="teamPortrait">${portrait}</div>
+      <div class="teamTowerName">${g.unit}</div>
+      <div class="teamTowerLevel">Lv. ${level}</div>
+    </div>
+    <div class="teamLoadout" aria-label="Equipped gear and reforge">
+      <div class="teamGearGrid">${gear}</div>
+      <div class="teamHammer">${reforgeHammer(g.reforge)}</div>
+    </div>
+  </div>`;
+}
+const towerCardStyle = (unit) => `--tower-card-bg:url('${encodeURI(TOWER_CARD_BACKGROUNDS[unit])}')`;
+
+function updateReforgeShowcase(name = $('reforge').value || 'None') {
+  const img = $('reforgePreview');
+  if (!img) return;
+  img.src = encodeURI(reforgeIconPath(name));
+  img.alt = `${name} reforge`;
+  img.title = `${name} reforge`;
+};
+
 async function init() {
   try { D = await loadAll(); }
   catch (e) { $('status').textContent = 'Could not load data/ — open this through Live Server or python -m http.server'; $('status').hidden = false; return; }
+  const repaired = uniqueTeamSlots(team);
+  team = repaired.team; repairedTeamDuplicates = repaired.removed;
+  if (repairedTeamDuplicates.length) store.set('ttd.team', team);
   try { TAGS = Object.fromEntries(parseCSV(await (await fetch('data/enemy_tags.csv')).text()).map((r) => [r.name, r])); } catch { TAGS = {}; }
   try { SPAWNS = parseCSV(await (await fetch('data/act_spawns.csv')).text()); } catch { SPAWNS = []; }
   try { BGS = await (await fetch('backgrounds/manifest.json')).json(); } catch { BGS = {}; }
@@ -100,6 +180,7 @@ async function init() {
   document.querySelectorAll('[data-acct]').forEach((c) => { c.checked = !!account[c.dataset.acct]; });
   account.seafood = clampSeafood(account.seafood);   // fix any old out-of-range saved value
   $('seafood').value = account.seafood;
+  syncSeafood();
   $('achList').onclick = onAchClick;
   renderBanners();
   $('bannerGrid').addEventListener('click', (ev) => {
@@ -115,7 +196,7 @@ async function init() {
   $('chart').addEventListener('mousemove', (ev) => {
     const C = chartCache; if (!C || C.empty) return;
     const r = $('chart').getBoundingClientRect(), x = ev.clientX - r.left, pl = 62, pw = C.W - 62 - 22;
-    chartHover = x >= pl && x <= pl + pw ? ((x - pl) / pw) * C.capDef : null; paintChart();
+    chartHover = x >= pl && x <= pl + pw ? Math.round(C.minDef + ((x - pl) / pw) * (C.capDef - C.minDef)) : null; paintChart();
   });
   $('chart').addEventListener('mouseleave', () => { chartHover = null; paintChart(); });
   $('cmpTierPick').addEventListener('click', (ev) => {
@@ -169,6 +250,20 @@ async function init() {
   $('unit').value = last?.unit && D.units[last.unit] ? last.unit : 'Slime Prince';
   onUnitChange(last);
 
+  const savedTeamDef = clampTeamDefense(store.get('ttd.teamDef', 0));
+  $('teamDef').value = savedTeamDef; $('teamDefRange').value = savedTeamDef;
+  $('teamDef').addEventListener('input', () => {
+    const v = clampTeamDefense($('teamDef').value);
+    $('teamDefRange').value = v; store.set('ttd.teamDef', v);
+  });
+  $('teamDef').addEventListener('change', () => {
+    const v = clampTeamDefense($('teamDef').value);
+    $('teamDef').value = v; $('teamDefRange').value = v; store.set('ttd.teamDef', v);
+  });
+  $('teamDefRange').addEventListener('input', () => {
+    $('teamDef').value = $('teamDefRange').value; store.set('ttd.teamDef', Number($('teamDefRange').value));
+  });
+
   document.body.addEventListener('input', onAnyInput);
   document.body.addEventListener('change', onAnyInput);
   $('unit').addEventListener('change', () => onUnitChange());
@@ -208,22 +303,6 @@ async function init() {
   renderExcluded();
   $('optTable').addEventListener('click', applyOptimized);
   $('teamSlots').addEventListener('click', onTeamClick);
-  // checkboxes fire 'input' before 'change'; handle them on 'input' and stop it there,
-  // otherwise the page re-renders and the click is lost (that was the "can't untick" bug)
-  $('chartTeam').addEventListener('input', (ev) => {
-    const el = ev.target;
-    if (el.dataset.show !== undefined) {
-      const i = Number(el.dataset.show);
-      el.checked ? chartHidden.delete(i) : chartHidden.add(i);
-      store.set('ttd.chartHidden', [...chartHidden]);
-      ev.stopPropagation(); render(); return;
-    }
-    onTeamSlider(ev);
-  });
-  $('chartTeam').addEventListener('change', (ev) => {
-    ev.stopPropagation();
-    if (ev.target.dataset.slot) render();
-  });
   $('teamSlots').addEventListener('input', onTeamSlider);
   $('teamSlots').addEventListener('change', (ev) => { if (ev.target.dataset.slot) { ev.stopPropagation(); render(); } });
   $('saveLoadout').onclick = () => {
@@ -232,7 +311,12 @@ async function init() {
   };
   $('loadLoadout').onclick = () => {
     const n = $('loadoutPick').value; if (!loadouts[n]) return;
-    team = structuredClone(loadouts[n]); $('loadoutName').value = n; store.set('ttd.team', team); render();
+    const repairedLoadout = uniqueTeamSlots(structuredClone(loadouts[n]));
+    team = repairedLoadout.team; loadouts[n] = structuredClone(team);
+    $('loadoutName').value = n; store.set('ttd.team', team); store.set('ttd.loadouts', loadouts); render();
+    showTeamNotice(repairedLoadout.removed.length
+      ? `Removed duplicate ${repairedLoadout.removed.join(', ')} from this older loadout. Use each tower's Placements slider for additional copies.`
+      : '');
   };
   $('deleteLoadout').onclick = () => {
     const n = $('loadoutPick').value; if (!loadouts[n]) return;
@@ -240,6 +324,8 @@ async function init() {
   };
   refreshLoadouts();
   render();
+  setupMotionFeedback();
+  if (repairedTeamDuplicates.length) showTeamNotice(`Removed duplicate ${repairedTeamDuplicates.join(', ')} from your saved Team. Use each tower's Placements slider for additional copies.`);
   appReady = true;
   if (store.get('ttd.view', 'build') === 'compare' && !cmpRows) runCompare();   // reopened on Compare Towers
 }
@@ -264,12 +350,15 @@ function onUnitChange(restore) {
 
 const SEAFOOD_MAX = 400;   // Seafood Dinner consume limit
 const clampSeafood = (v) => Math.min(SEAFOOD_MAX, Math.max(0, Math.floor(Number(v) || 0)));
+const TEAM_DEF_MIN = -5, TEAM_DEF_MAX = 40;
+const clampTeamDefense = (v) => Math.min(TEAM_DEF_MAX, Math.max(TEAM_DEF_MIN, Number(v) || 0));
 function onAnyInput(ev) {
   const t = ev.target;
   if (t.dataset?.acct) account[t.dataset.acct] = t.checked;
   if (t.id === 'seafood') {
     account.seafood = clampSeafood(t.value);
     if (ev.type === 'change' || Number(t.value) > SEAFOOD_MAX) t.value = account.seafood;   // show the clamped value
+    syncSeafood();
   }
   store.set('ttd.account', account);
   render();
@@ -334,7 +423,45 @@ function stats(b, fight) {
 }
 
 const fmt = (x, d = 1) => (Number.isFinite(x) ? x.toLocaleString(undefined, { maximumFractionDigits: d }) : '—');
-const tile = (k, v, s = '', hero = false) => `<div class="stat${hero ? ' hero' : ''}"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+const tile = (k, v, s = '', hero = false) => {
+  const key = /dps|mana|cost/i.test(k);
+  return `<div class="stat${hero ? ' hero' : ''}${key ? ' key' : ''}"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+};
+
+// Small calculation feedback: only values that actually changed receive the pulse.
+const MOTION_VALUE_SELECTOR = '.stat .v, .slot .dps, .slot label';
+let motionValues = new Map(), motionFrame = 0, motionObserver = null;
+function motionValueKey(el) {
+  const owner = el.closest('[id]');
+  if (!owner) return null;
+  const siblings = [...owner.querySelectorAll(MOTION_VALUE_SELECTOR)];
+  const label = el.matches('.stat .v') ? el.parentElement.querySelector('.k')?.textContent.trim() : el.className;
+  return `${owner.id}:${siblings.indexOf(el)}:${label || ''}`;
+}
+function scanMotionValues(animate = true) {
+  const next = new Map();
+  document.querySelectorAll(MOTION_VALUE_SELECTOR).forEach((el) => {
+    const key = motionValueKey(el), value = el.textContent.trim();
+    if (!key) return;
+    next.set(key, value);
+    if (animate && motionValues.has(key) && motionValues.get(key) !== value) {
+      el.classList.remove('valueChanged');
+      void el.offsetWidth;
+      el.classList.add('valueChanged');
+      el.addEventListener('animationend', () => el.classList.remove('valueChanged'), { once: true });
+    }
+  });
+  motionValues = next;
+}
+function setupMotionFeedback() {
+  scanMotionValues(false);
+  motionObserver?.disconnect();
+  motionObserver = new MutationObserver(() => {
+    cancelAnimationFrame(motionFrame);
+    motionFrame = requestAnimationFrame(() => scanMotionValues(true));
+  });
+  motionObserver.observe(document.querySelector('main'), { childList: true, characterData: true, subtree: true });
+}
 
 // ---------- icons (optional: run tools/fetch_icons.py) ----------
 const ICON_CAT = { unit: 'units', weapon: 'weapons', helmet: 'armors', chest: 'armors', boots: 'armors', enemy: 'enemies' };
@@ -355,8 +482,8 @@ const HEADING_ICONS = {
   '#build h2': ['weapons', 'Copper Shortsword'],
   '#fight h2': ['enemies', 'King Slime'],
   '#results h2': ['consumables', 'DPS Meter'],
+  '#teamCard h2': ['units', 'Guide'],
   '#actCard h2': ['enemies', 'Eye of Cthulhu'],
-  '#chartCard h2': ['accessories', 'Shark Tooth Necklace'],
   '#acctCard h2': ['consumables', 'Seafood Dinner'],
   '#compareCard h2': ['consumables', 'Golden Crate'],
   '#fantasyCard h2': ['accessories', 'Gold Crown'],
@@ -380,6 +507,7 @@ function updateIcons() {
 function render() {
   if (!D) return;
   updateIcons();
+  updateReforgeShowcase();
   const b = currentBuild(), f = fightOpts(), s = stats(b, f.fight);
   const dps = realDPS(s, f.enemy, f.opts), scr = screenDPS(s);
   const u = D.units[b.unit];
@@ -395,7 +523,11 @@ function render() {
   if (s.defMult > 1) html += tile('Defense penalty', `×${s.defMult}`, 'each enemy DEF point removes ' + s.defMult + ' dmg');
   if (s.Splash) html += tile('Splash', fmt(s.Splash));
   if (s.Globe) html += tile('Globe', s.Globe);
-  if (s.chains > 1) html += tile('Chain', `${s.chains} @ ${fmt(s.preserve * 100, 0)}%`);
+  if (s.chains > 1) {
+    const used = Math.max(1, Math.min(s.chains, Math.floor(f.opts.chainTargets ?? f.opts.targets) || 1));
+    html += tile('Chain', `${used} / ${s.chains} hits @ ${fmt(s.preserve * 100, 0)}%`,
+      used < s.chains ? `capped by ${used} enem${used === 1 ? 'y' : 'ies'} available` : 'total crowd damage');
+  }
   if (s.pellets > 1) html += tile('Pellets', s.pellets);
   if (s.percent) html += tile('% max HP', `${s.percent}%`, 'raw, ignores DEF, cap 100');
   if (s.critChance || f.opts.badLuck) html += tile('Crit', `${fmt(Math.min(1, s.critChance + (f.opts.badLuck || 0)) * 100, 0)}%`,
@@ -434,8 +566,8 @@ function render() {
   $('warnings').innerHTML = w.map((x) => `<div>${x}</div>`).join('');
   $('itemNotes').textContent = [...specials.map((x) => `Not modeled — ${x}`), ...notes].join(' · ');
 
-  drawChart(b, f);
   const fT = withTeamBadLuck(f);   // a placed Black Cat in the Team debuffs enemies for everyone
+  drawChart(b, fT);
   renderAct(b, fT);
   renderTeam(fT);
   renderPlan(fT);
@@ -486,17 +618,22 @@ function actDPS(b, mix, f) {
 }
 // "Rank accessories for": every filled Team slot by tower name (+ the Build panel), and that tower's accessory slots
 function rankTarget(buildPanel) {
-  const filled = team.map((t, i) => ({ t, i })).filter(({ t }) => t && D.units[t.build.unit]);
+  const filled = team.map((t, i) => ({ t, i }))
+    .filter(({ t }) => t && D.units[t.build.unit] && !CHART_EXCLUDED_UNITS.has(t.build.unit));
   const count = {}; filled.forEach(({ t }) => { count[t.build.unit] = (count[t.build.unit] || 0) + 1; });
   const choices = filled.map(({ t, i }) => ({ value: String(i), label: t.build.unit + (count[t.build.unit] > 1 ? ` (team slot ${i + 1})` : ''),
                                               b: { ...t.build, acc: [...t.build.acc], tier: String(t.tier) } }));
-  choices.push({ value: 'build', label: `Build panel: ${buildPanel.unit}`, b: buildPanel });
+  if (!CHART_EXCLUDED_UNITS.has(buildPanel.unit)) choices.push({ value: 'build', label: `Build panel: ${buildPanel.unit}`, b: buildPanel });
   const tSel = $('rankTower'), prevT = tSel.value || store.get('ttd.rankTower', '');
+  const sSel = $('rankSlot');
+  if (!choices.length) {
+    tSel.innerHTML = '<option>No attacking towers</option>'; sSel.innerHTML = ''; return null;
+  }
   tSel.innerHTML = choices.map((c) => `<option value="${c.value}">${c.label}</option>`).join('');
   tSel.value = choices.some((c) => c.value === prevT) ? prevT : choices[0].value;
   store.set('ttd.rankTower', tSel.value);
   const rb = choices.find((c) => c.value === tSel.value).b;
-  const sSel = $('rankSlot'), prevS = sSel.selectedIndex;
+  const prevS = sSel.selectedIndex;
   sSel.innerHTML = rb.acc.map((a, i) => `<option>Slot ${i + 1}: ${a || 'empty'}</option>`).join('');
   sSel.selectedIndex = rb.acc.length ? Math.min(Math.max(prevS, 0), rb.acc.length - 1) : -1;
   return rb;
@@ -522,44 +659,38 @@ function renderAct(b, f) {
   if (!mix || !mix.length) { $('actStats').innerHTML = '<p class="muted">Pick an act to see its enemy mix.</p>'; $('actTable').innerHTML = ''; $('rankTable').innerHTML = ''; $('buildsTable').innerHTML = ''; return; }
   const n = mix.reduce((t, m) => t + m.count, 0);
   const avgDef = mix.reduce((t, m) => t + m.count * m.DEF, 0) / n;
-  const maxE = mix.reduce((a, m) => (m.DEF > a.DEF ? m : a), mix[0]);
   const ico = (cat, name) => ICONS[cat]?.[name] ? `<img class="ico" src="${encodeURI(ICONS[cat][name])}" alt="">` : '';
 
   // ---- the Team (5 slots) vs this act ----
-  const members = teamMembers().map((m) => {
-    const each = actDPS(m.b, mix, f), cost = stats(m.b, {}).cost;
-    return { ...m, each, total: each * m.t.placements, mana: cost * m.t.placements };
+  const members = teamMembers().filter((m) => !CHART_EXCLUDED_UNITS.has(m.b.unit)).map((m) => {
+    const each = actDPS(m.b, mix, f);
+    return { ...m, each, total: each * m.t.placements };
   });
   const teamDps = members.reduce((t, m) => t + m.total, 0);
-  const teamMana = members.reduce((t, m) => t + m.mana, 0);
 
   $('actStats').innerHTML =
     (members.length
-      ? tile('Team Act DPS', fmt(teamDps), `${members.length} towers · ${members.reduce((t, m) => t + m.t.placements, 0)} placements`, true) +
-        tile('Team mana', fmt(teamMana, 0), `${fmt(teamDps / teamMana * 1000, 2)} DPS per 1k mana`)
-      : tile('Team Act DPS', '—', 'Add towers in the Team section above', true)) +
+      ? tile('Team Act DPS', fmt(teamDps), `${members.length} towers · ${members.reduce((t, m) => t + m.t.placements, 0)} placements`, true)
+      : tile('Team Act DPS', '—', 'Add attacking towers in Team & Defense', true)) +
     tile('Avg DEF', fmt(avgDef, 1), 'per enemy') +
-    tile('Highest DEF', maxE.DEF, maxE.name) +
     tile('Enemies', `${fmt(n, 0)}${mix.some((m) => m.boss) ? '+' : ''}`, mix.some((m) => m.boss) ? '+ boss minions' : '');
 
-  // enemy mix: team DPS against each enemy (sum of every placement)
-  $('actTable').innerHTML = `<tr><th>Enemy</th><th>#</th><th>% of enemies</th><th>DEF</th><th>${members.length ? 'Team DPS' : 'Build DPS'}</th></tr>` +
-    mix.map((m) => {
-      const vs = { DEF: m.DEF, maxHP: m.HP, HP: m.HP };
-      const d = members.length
-        ? members.reduce((t, x) => t + realDPS(stats(x.b, fightFor(m.name)), vs, f.opts) * x.t.placements, 0)
-        : realDPS(stats(b, fightFor(m.name)), vs, f.opts);
-      return `<tr><td>${ico('enemies', m.name)}${m.name}${m.boss ? ' 👑' : ''}</td><td>${m.count}</td><td>${fmt(m.count / n * 100, 0)}%</td><td>${m.DEF}</td><td>${fmt(d)}</td></tr>`;
-    }).join('');
+  $('actTable').innerHTML = '<tr><th>Enemy</th><th>#</th><th>% of enemies</th><th>DEF</th></tr>' +
+    mix.map((m) => `<tr><td>${ico('enemies', m.name)}${m.name}${m.boss ? ' 👑' : ''}</td><td>${m.count}</td><td>${fmt(m.count / n * 100, 0)}%</td><td>${m.DEF}</td></tr>`).join('');
 
   // per-tower breakdown
   $('buildsTable').innerHTML = members.length
-    ? '<tr><th>Tower</th><th>Upgrade</th><th>Each</th><th>Placements</th><th>Total DPS</th><th>% of team</th><th>Mana</th><th>DPS / 1k mana</th></tr>' +
-      members.map((m) => `<tr><td>${ico('units', m.b.unit)}${m.b.unit} <span class="muted">(${ordinal(m.slot + 1)} slot)</span></td><td>${m.t.tier}/${D.upgrades[m.b.unit].length - 1}</td><td>${fmt(m.each)}</td><td>${m.t.placements}</td><td>${fmt(m.total)}</td><td>${fmt(m.total / teamDps * 100, 0)}%</td><td>${fmt(m.mana, 0)}</td><td>${fmt(m.total / m.mana * 1000, 2)}</td></tr>`).join('')
-    : '<tr><td class="muted" style="text-align:left">No towers in the Team yet. Use "Set from Build" on a Team slot.</td></tr>';
+    ? '<tr><th>Tower</th><th>Upgrade</th><th>Placements</th><th>Total DPS</th><th>% of team</th></tr>' +
+      members.map((m) => `<tr><td>${ico('units', m.b.unit)}${m.b.unit}</td><td>${m.t.tier}/${D.upgrades[m.b.unit].length - 1}</td><td>${m.t.placements}</td><td>${fmt(m.total)}</td><td>${fmt(teamDps ? m.total / teamDps * 100 : 0, 0)}%</td></tr>`).join('')
+    : '<tr><td class="muted" style="text-align:left">No attacking towers in Team & Defense yet.</td></tr>';
 
   // accessory ranking: pick a Team tower (by name), then swap every accessory into one of its slots
   const rb = rankTarget(b);
+  if (!rb) {
+    $('rankTitle').textContent = 'Best accessory vs this act';
+    $('rankTable').innerHTML = '<tr><td class="muted" style="text-align:left">Add an attacking tower to rank accessories.</td></tr>';
+    return;
+  }
   const slot = Math.max(0, $('rankSlot').selectedIndex);
   const others = rb.acc.filter((_, i) => i !== slot);
   const cands = ['', ...D.accessories.map((a) => a.name).filter((n) => !others.includes(n) && allowedFor(D.accessories.find((r) => r.name === n), rb.unit))];
@@ -569,21 +700,48 @@ function renderAct(b, f) {
     return { name, dps: actDPS({ ...rb, acc }, mix, f) };
   }).sort((x, y) => y.dps - x.dps);
   $('rankTitle').innerHTML = `${ico('units', rb.unit)}Best accessory for ${rb.unit} vs this act <span class="muted">(per placement)</span>`;
+  const currentName = rb.acc[slot] || '';
+  const shown = [...ranked.slice(0, 5)];
+  const current = ranked.find((r) => r.name === currentName);
+  if (current && !shown.some((r) => r.name === current.name)) shown.push(current);
   $('rankTable').innerHTML = !rb.acc.length ? `<tr><td class="muted" style="text-align:left">${rb.unit} has no accessory slots.</td></tr>` :
     '<tr><th>Accessory</th><th>Act DPS</th><th>vs current</th></tr>' +
-    ranked.slice(0, 12).map((r) => {
+    shown.map((r) => {
       const dlt = (r.dps / curDps - 1) * 100;
       const cls = Math.abs(dlt) < 0.05 ? '' : dlt > 0 ? 'up' : 'down';
-      return `<tr class="${r.name === (rb.acc[slot] || '') ? 'cur' : ''}"><td>${ico('accessories', r.name)}${r.name || '— empty —'}</td><td>${fmt(r.dps)}</td><td class="${cls}">${dlt >= 0 ? '+' : ''}${fmt(dlt, 1)}%</td></tr>`;
+      return `<tr class="${r.name === currentName ? 'cur' : ''}"><td>${ico('accessories', r.name)}${r.name || '— empty —'}</td><td>${fmt(r.dps)}</td><td class="${cls}">${dlt >= 0 ? '+' : ''}${fmt(dlt, 1)}%</td></tr>`;
     }).join('');
 }
 
 // Results panel: put the current Build into a chosen Team slot
+function uniqueTeamSlots(list) {
+  const source = Array.isArray(list) ? list : [];
+  const seen = new Set(), removed = [];
+  const clean = Array.from({ length: 5 }, (_, i) => {
+    const t = source[i] || null, unit = t?.build?.unit;
+    if (!unit) return t;
+    if (seen.has(unit)) { removed.push(unit); return null; }
+    seen.add(unit); return t;
+  });
+  return { team: clean, removed: [...new Set(removed)] };
+}
+function showTeamNotice(message) {
+  const el = $('teamNotice');
+  if (!el) return;
+  el.textContent = message; el.hidden = !message;
+}
 function setTeamSlot(i) {
   const b = currentBuild();
+  const duplicate = team.findIndex((t, j) => j !== i && t?.build?.unit === b.unit);
+  if (duplicate >= 0) {
+    showTeamNotice(`${b.unit} is already in Slot ${duplicate + 1}. Use that card's Placements slider for additional copies.`);
+    return false;
+  }
   const max = D.upgrades[b.unit].length - 1;
   team[i] = { build: { ...b, acc: [...b.acc] }, tier: Number(b.tier ?? max),
               placements: Number(D.units[b.unit].max_placements) || 1 };
+  showTeamNotice('');
+  return true;
 }
 function refreshTeamSlotPick() {
   const sel = $('teamSlotPick'), prev = sel.value;
@@ -609,6 +767,15 @@ function syncWhip() {
   const html = `${ico}<span><b>${name || 'None'}</b> — ${what}${row?.obtain ? `<br><span class="muted">${row.obtain}</span>` : ''}</span>`;
   $('whipInfo').innerHTML = html;
 }
+function syncSeafood() {
+  const count = clampSeafood($('seafood').value);
+  const bonus = count * 0.05;
+  const path = ICONS.consumables?.['Seafood Dinner'];
+  const ico = path ? `<img src="${encodeURI(path)}" alt="">` : '';
+  $('seafoodInfo').innerHTML = `${ico}<span><b>Seafood Dinner</b> — Permanently boosts every unit's DMG by 0.05% per dinner, up to 20.00% at 400.
+    <br><span class="seafoodBonus">Current: ${count} dinner${count === 1 ? '' : 's'} · +${bonus.toFixed(2)}% DMG</span>
+    <br><span class="muted">Crafting: 2 Damselfish + (1 Salmon or 1 Rock Lobster).</span></span>`;
+}
 // Fantasy's crowd setting: enemies per splash-unit of lane; one hit catches max(1, min(clump, density·2·Splash)).
 // Splash radius is linear in the Splash stat (in-game circles for Splash 2/4/8: 1× / 2.1× / 4.4× wide).
 // light:  Journey Act 1 waves 1–4      → Splash 2/4/8 caught ~1 / ~2 / ~2–3   (fit 0.18 → 1 / 1.4 / 2.9)
@@ -622,7 +789,8 @@ function fxCrowd() {
 function fxContext() {
   const f = fightOpts(), mix = actMix();
   const crowd = fxCrowd();
-  f.opts = { ...f.opts, targets: 1, ...(crowd ? { density: crowd.density, clump: crowd.clump } : {}) };
+  // single-target → chains get only their first hit; crowd → chains can reach up to the clump size
+  f.opts = { ...f.opts, targets: 1, chainTargets: crowd ? crowd.clump : 1, ...(crowd ? { density: crowd.density, clump: crowd.clump } : {}) };
   const dps = (b) => (mix && mix.length ? actDPS(b, mix, f) : realDPS(stats(b, f.fight), f.enemy, f.opts));
   const vs = (mix && mix.length ? `${$('act').value} (${$('diff').value})` : `${$('enemy').value || 'custom enemy'} (DEF ${f.enemy.DEF})`) +
              (crowd ? ` · ${crowd.mode} crowd (clumps ≤ ${crowd.clump})` : ' · single-target');
@@ -941,7 +1109,6 @@ function regearFantasy(i) {
 
 function renderFantasy() {
   const { mode, budget, ctx } = fxMeta;
-  const icon = (cat, name, cls = '') => ICONS[cat]?.[name] ? `<img class="${cls}" src="${encodeURI(ICONS[cat][name])}" alt="" title="${name}">` : '';
   const live = fxLast.filter(Boolean), fighters = live.filter((x) => !x.o.mps);
   const dps = live.reduce((t, x) => t + x.o.dps, 0), mana = live.reduce((t, x) => t + x.o.cost, 0);
   const pl = live.reduce((t, x) => t + x.placements, 0);
@@ -960,14 +1127,10 @@ function renderFantasy() {
     if (!x) return `<div class="slot empty"><div class="name">${ordinal(i + 1)} slot: empty</div>
       <div class="muted">No tower reaches ${fxMeta.bands[i] ? bandText(fxMeta.bands[i]) : 'this role'}.</div></div>`;
     const g = x.build, u = D.units[g.unit], maxTier = D.upgrades[g.unit].length - 1;
-    const gear = [['weapons', g.weapon], ['armors', g.helmet], ['armors', g.chest], ['armors', g.boots], ...g.acc.map((a) => ['accessories', a])]
-      .filter(([, n]) => n).map(([c, n]) => icon(c, n)).join('');
-    const names = fxGear(g).join(', ') || 'no gear';
     const ones = fxGear(g).filter(isOneCopy);
-    return `<div class="slot">
-      <div class="name">${icon('units', g.unit, 'ico')}${g.unit} <span class="muted">(${ordinal(i + 1)} slot)</span></div>
-      <div class="muted">${g.reforge} · Lv ${u.can_level === 'no' ? 1 : 45} · upgrade ${x.tier}/${maxTier} · ×${x.placements}</div>
-      <div class="gear" title="${names}">${gear}</div>
+    return `<div class="slot reforgeCard towerBackdrop fantasyTowerCard" style="${towerCardStyle(g.unit)}">
+      ${towerCardVisual(g, u.can_level === 'no' ? 1 : 45)}
+      <div class="muted fantasyBuildMeta">${ordinal(i + 1)} slot · Upgrade ${x.tier}/${maxTier} · ×${x.placements}</div>
       ${ones.length ? `<div class="muted">★ Limited: ${ones.join(', ')}</div>` : ''}
       ${x.o.mps
         ? `<div class="dps">${fmt(x.o.mps, 2)} mana/s</div>
@@ -1102,7 +1265,8 @@ function renderBanners() {
     return `<button type="button" class="bannerTile${on ? ' on' : ''}" data-banner="${n}" title="${on ? 'Owned' : 'Not owned'}">
       ${ic ? `<img src="${encodeURI(ic)}" alt="">` : '<span class="noimg"></span>'}
       <span class="bText"><span class="bName">${n}${BANNER_KEY[n] ? ' <span class="badge" title="Used by the damage model">⚔ DPS</span>' : ''}</span>
-        <span class="bEffect">${effect}</span></span>
+        <span class="bEffect">${effect}</span>
+</span>
       <span class="bDot" aria-label="${on ? 'owned' : 'not owned'}"></span>
     </button>`;
   }).join('') || '<p class="muted">No banners match that search.</p>';
@@ -1180,7 +1344,7 @@ function onAchClick(ev) {
 function saveBuildToTeam() {
   const i = Number($('teamSlotPick').value);
   const replaced = team[i]?.build?.unit;
-  setTeamSlot(i);
+  if (!setTeamSlot(i)) return;
   store.set('ttd.team', team);
   $('saveToTeamMsg').textContent = `Saved to slot ${i + 1}${replaced ? ` (replaced ${replaced})` : ''}`;
   $('teamSlotPick').value = '';
@@ -1189,19 +1353,20 @@ function saveBuildToTeam() {
 
 // Team palette: gold = team total; the rest are tuned to sit well on the indigo theme (no pure white)
 const COLORS = ['#ffd93d', '#7fe3ff', '#6cf06a', '#ff8fb1', '#c3a6ff', '#ffa45c', '#9fb4ff'];
+const CHART_EXCLUDED_UNITS = new Set(['Merchant', 'Star Merchant']);
 
-let chartHidden = new Set(store.get('ttd.chartHidden', []));
+const teamDefense = () => clampTeamDefense($('teamDef')?.value);
+const teamFight = (f) => ({ ...f, enemy: { ...f.enemy, DEF: teamDefense() } });
 function chartSeries(cur, f) {
-  const members = teamMembers();
+  const members = teamMembers().filter((m) => !CHART_EXCLUDED_UNITS.has(m.b.unit));
   const per = members.map((m, k) => {
     const st = stats(m.b, f.fight);
     return { label: `${m.b.unit} ×${m.t.placements}`, unit: m.b.unit, slot: m.slot, s: [st], color: COLORS[(k + 1) % COLORS.length], width: 2.25,
              fns: [(d) => realDPS(st, { ...f.enemy, DEF: d }, f.opts) * m.t.placements] };
   });
   if (!per.length) return [];
-  const shown = per.filter((p) => !chartHidden.has(p.slot));
-  const total = { label: 'Team total', total: true, color: COLORS[0], width: 4, s: per.flatMap((p) => p.s), fns: shown.flatMap((p) => p.fns) };
-  return [total, ...shown];
+  const total = { label: 'Team total', total: true, color: COLORS[0], width: 4, s: per.flatMap((p) => p.s), fns: per.flatMap((p) => p.fns) };
+  return [total, ...per];
 }
 // "Nice" axis step: 1 / 2 / 2.5 / 5 × 10^n
 function niceStep(max, ticks = 5) {
@@ -1211,30 +1376,23 @@ function niceStep(max, ticks = 5) {
 let chartCache = null, chartHover = null;   // computed lines + layout, reused for hover redraws
 function drawChart(cur, f) {
   const cv = $('chart');
-  renderChartTeam(f);
-  const series = chartSeries(cur, f);
+  const tf = teamFight(f), series = chartSeries(cur, tf);
   const W = Math.max(320, cv.clientWidth || cv.parentElement.clientWidth - 40), H = Math.round(Math.min(480, Math.max(300, W * 0.44)));
   if (!series.length) { chartCache = { empty: true, W, H }; paintChart(); $('legend').innerHTML = ''; return; }
-  // x range: just past the point where every line has flattened out at its minimum-damage floor
   const at = (x, d) => x.fns.reduce((t, fn) => t + fn(d), 0);
-  let flat = 0;
-  for (const x of series) {
-    const floorV = at(x, 400);
-    for (let d = 400; d >= 0; d -= 1) if (at(x, d) > floorV * 1.005 + 1e-9) { flat = Math.max(flat, d + 1); break; }
-  }
-  const xStep = niceStep(Math.min(Math.max(20, Math.ceil(flat * 1.15)), 400));
-  const capDef = Math.ceil(Math.min(Math.max(20, Math.ceil(flat * 1.15)), 400) / xStep) * xStep;
-  const step = Math.max(0.25, capDef / 320);
-  const pts = series.map((x) => { const a = []; for (let d = 0; d <= capDef + 1e-9; d += step) a.push([d, at(x, d)]); return a; });
+  const wantedDef = teamDefense();
+  const minDef = TEAM_DEF_MIN, capDef = TEAM_DEF_MAX, xStep = 5;
+  const step = (capDef - minDef) / 320;
+  const pts = series.map((x) => { const a = []; for (let d = minDef; d <= capDef + 1e-9; d += step) a.push([d, at(x, d)]); return a; });
   const peak = Math.max(1, ...pts.flat().map((p) => p[1]));
   const yStep = niceStep(peak * 1.05), maxY = Math.ceil(peak * 1.05 / yStep) * yStep;
-  const mix = actMix();
-  const markers = [{ d: f.enemy.DEF, color: '#ff7676', label: `Enemy DEF ${fmt(f.enemy.DEF, 0)}` }];
-  if (mix && mix.length) {
-    const n = mix.reduce((t, m) => t + m.count, 0), avg = mix.reduce((t, m) => t + m.count * m.DEF, 0) / n;
-    markers.push({ d: avg, color: '#ffd93d', label: `Act avg ${fmt(avg, 1)}` });
-  }
-  chartCache = { W, H, series, pts, capDef, xStep, maxY, yStep, markers, step };
+  const markers = wantedDef === 0
+    ? [{ d: 0, color: '#ffd93d', label: 'DEF 0 · selected', zero: true }]
+    : [
+        { d: 0, color: '#dfe4ff', label: 'DEF 0', zero: true },
+        { d: wantedDef, color: '#ff7676', label: `Selected DEF ${fmt(wantedDef, 0)}` },
+      ];
+  chartCache = { W, H, series, pts, minDef, capDef, xStep, maxY, yStep, markers, step };
   paintChart();
   const icon = (n) => (n && ICONS.units?.[n] ? `<img class="ico" src="${encodeURI(ICONS.units[n])}" alt="">` : '');
   $('legend').innerHTML = series.map((x) => `<span class="${x.total ? 'total' : ''}" style="--c:${x.color}">${icon(x.unit)}${x.label}</span>`).join('');
@@ -1249,7 +1407,7 @@ function paintChart() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, W, H);
   const css = getComputedStyle(document.documentElement), txt = css.getPropertyValue('--chart-text').trim() || '#c9d1ff';
-  const font = (w, s) => `${w} ${s}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+  const font = (w, s) => `${w} ${s}px "Terraria Andy", Andy, cursive`;
   const pad = { l: 62, r: 22, t: 34, b: 56 };
   const pw = W - pad.l - pad.r, ph = H - pad.t - pad.b;
   // plot panel
@@ -1263,12 +1421,15 @@ function paintChart() {
     ctx.fillStyle = txt; ctx.font = font(600, 15); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('Add towers to your Team to see the chart', pad.l + pw / 2, pad.t + ph / 2); return;
   }
-  const X = (d) => pad.l + (d / C.capDef) * pw, Y = (v) => pad.t + ph - (v / C.maxY) * ph;
+  const X = (d) => pad.l + ((d - C.minDef) / (C.capDef - C.minDef)) * pw, Y = (v) => pad.t + ph - (v / C.maxY) * ph;
   // grid + axis labels
   ctx.save(); rr(pad.l, pad.t, pw, ph, 10); ctx.clip();
-  ctx.strokeStyle = 'rgba(160,175,255,.14)'; ctx.setLineDash([3, 5]);
+  ctx.strokeStyle = 'rgba(160,175,255,.09)'; ctx.lineWidth = 1; ctx.setLineDash([2, 6]);
   for (let v = C.yStep; v < C.maxY - 1e-9; v += C.yStep) { ctx.beginPath(); ctx.moveTo(pad.l, Y(v)); ctx.lineTo(pad.l + pw, Y(v)); ctx.stroke(); }
-  for (let d = C.xStep; d < C.capDef - 1e-9; d += C.xStep) { ctx.beginPath(); ctx.moveTo(X(d), pad.t); ctx.lineTo(X(d), pad.t + ph); ctx.stroke(); }
+  for (let d = C.minDef + C.xStep; d < C.capDef - 1e-9; d += C.xStep) {
+    if (d === 0) continue;
+    ctx.beginPath(); ctx.moveTo(X(d), pad.t); ctx.lineTo(X(d), pad.t + ph); ctx.stroke();
+  }
   ctx.setLineDash([]);
   // area under the team total
   const tot = C.pts[0], grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + ph);
@@ -1278,7 +1439,7 @@ function paintChart() {
   // markers
   for (const m of C.markers) {
     if (m.d > C.capDef) continue;
-    ctx.strokeStyle = m.color; ctx.globalAlpha = .85; ctx.lineWidth = 1.5; ctx.setLineDash([5, 5]);
+    ctx.strokeStyle = m.color; ctx.globalAlpha = m.zero ? .9 : .82; ctx.lineWidth = m.zero ? 2 : 1.5; ctx.setLineDash(m.zero ? [] : [5, 5]);
     ctx.beginPath(); ctx.moveTo(X(m.d), pad.t); ctx.lineTo(X(m.d), pad.t + ph); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
   }
   // lines: towers first, team total last (on top, with a soft glow)
@@ -1306,20 +1467,20 @@ function paintChart() {
   ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
   for (let v = 0; v <= C.maxY + 1e-9; v += C.yStep) ctx.fillText(fmt(v, 0), pad.l - 10, Y(v));
   ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-  for (let d = 0; d <= C.capDef + 1e-9; d += C.xStep) ctx.fillText(fmt(d, d % 1 ? 1 : 0), X(d), pad.t + ph + 8);
+  for (let d = C.minDef; d <= C.capDef + 1e-9; d += C.xStep) ctx.fillText(fmt(d, d % 1 ? 1 : 0), X(d), pad.t + ph + 8);
   ctx.font = font(700, 12); ctx.fillStyle = '#e6eaff';
   ctx.fillText('Enemy DEF', pad.l + pw / 2, pad.t + ph + 30);
   ctx.save(); ctx.translate(18, pad.t + ph / 2); ctx.rotate(-Math.PI / 2); ctx.textBaseline = 'middle'; ctx.fillText('DPS', 0, 0); ctx.restore();
   // hover: crosshair + tooltip with every line's DPS at that DEF
-  if (chartHover != null && chartHover >= 0 && chartHover <= C.capDef) {
-    const i = Math.round(chartHover / C.step), d = C.pts[0][Math.min(i, C.pts[0].length - 1)][0], x = X(d);
+  if (chartHover != null && chartHover >= C.minDef && chartHover <= C.capDef) {
+    const i = Math.round((chartHover - C.minDef) / C.step), d = C.pts[0][Math.min(i, C.pts[0].length - 1)][0], x = X(d);
     ctx.strokeStyle = 'rgba(255,255,255,.45)'; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t + ph); ctx.stroke();
     const rows = C.series.map((s, k) => ({ s, v: C.pts[k][Math.min(i, C.pts[k].length - 1)][1] }));
     for (const r of rows) { ctx.beginPath(); ctx.arc(x, Y(r.v), r.s.total ? 4.5 : 3.5, 0, Math.PI * 2); ctx.fillStyle = r.s.color; ctx.fill();
       ctx.strokeStyle = '#141a48'; ctx.lineWidth = 1.5; ctx.stroke(); }
     ctx.font = font(600, 12);
-    const lines = [`DEF ${fmt(d, d % 1 ? 1 : 0)}`, ...rows.map((r) => `${r.s.label}: ${fmt(r.v, 1)}`)];
+    const lines = [`DEF ${fmt(d, 0)}`, ...rows.map((r) => `${r.s.label}: ${fmt(r.v, 2)} DPS`)];
     const tw = Math.max(...lines.map((l) => ctx.measureText(l).width)) + 34, th = lines.length * 18 + 12;
     let tx = x + 12; if (tx + tw > pad.l + pw) tx = x - 12 - tw;
     const ty = pad.t + 8;
@@ -1332,24 +1493,6 @@ function paintChart() {
     });
   }
 }
-// per-tower controls under the chart (share state with the Team section)
-function renderChartTeam(f) {
-  const box = $('chartTeam');
-  const members = team.map((t, i) => ({ t, i })).filter(({ t }) => t && D.units[t.build.unit]);
-  if (!members.length) { box.innerHTML = ''; return; }
-  const icon = (n) => ICONS.units?.[n] ? `<img class="ico" src="${encodeURI(ICONS.units[n])}" alt="">` : '';
-  let k = 0;
-  box.innerHTML = members.map(({ t, i }) => {
-    const maxTier = D.upgrades[t.build.unit].length - 1, maxPl = Number(D.units[t.build.unit].max_placements) || 1;
-    const color = t.placements > 0 ? COLORS[(++k) % COLORS.length] : 'transparent';
-    return `<div class="slot">
-      <div class="name"><span>${icon(t.build.unit)}<span class="swatch" style="--c:${color}"></span>${t.build.unit}</span>
-        <label style="flex-direction:row;align-items:center;gap:6px;color:var(--ink)"><input type="checkbox" data-show="${i}" ${chartHidden.has(i) ? '' : 'checked'}> show</label></div>
-      <label>Upgrade ${t.tier}/${maxTier}<input type="range" min="0" max="${maxTier}" value="${t.tier}" data-slot="${i}" data-kind="tier"></label>
-      <label>Placements ${t.placements}/${maxPl}<input type="range" min="0" max="${maxPl}" value="${t.placements}" data-slot="${i}" data-kind="placements"></label>
-    </div>`;
-  }).join('');
-}
 init();
 
 // ---------- team (5 slots) ----------
@@ -1361,7 +1504,7 @@ function refreshLoadouts(select) {
 function onTeamClick(ev) {
   const btn = ev.target.closest('button[data-act]'); if (!btn) return;
   const i = Number(btn.dataset.slot), act = btn.dataset.act;
-  if (act === 'set') setTeamSlot(i); else if (act === 'edit' && team[i]) {
+  if (act === 'set' && !setTeamSlot(i)) return; else if (act === 'edit' && team[i]) {
     const b = team[i].build;
     $('unit').value = b.unit; onUnitChange({ ...b, tier: String(team[i].tier) });
     showView('build');
@@ -1385,41 +1528,42 @@ function slotDPS(t, f, mix) {
   return realDPS(stats(b, f.fight), f.enemy, f.opts);
 }
 function renderTeam(f) {
-  const mix = actMix();
-  const icon = (cat, name, cls = '') => ICONS[cat]?.[name] ? `<img class="${cls}" src="${encodeURI(ICONS[cat][name])}" alt="" title="${name}">` : '';
+  const tf = teamFight(f), targetDef = teamDefense();
   let totDps = 0, totMana = 0, totPl = 0;
   const cards = team.map((t, i) => {
     if (!t || !D.units[t.build.unit]) {
-      return `<div class="slot empty"><div class="name">Slot ${i + 1}: empty</div>
-        <div class="btns"><button data-act="set" data-slot="${i}">Set from Build</button></div></div>`;
+      return `<div class="slot empty teamEmpty">
+        <button class="emptySlotAdd" data-act="set" data-slot="${i}" aria-label="Add the current Build to team slot ${i + 1}">
+          <span class="emptySlotPlus" aria-hidden="true">+</span>
+          <span class="emptySlotLabel">Add tower</span>
+          <span class="emptySlotNote">Slot ${i + 1} · uses current Build</span>
+        </button>
+      </div>`;
     }
     const u = D.units[t.build.unit], rows = D.upgrades[t.build.unit];
     const maxTier = rows.length - 1, maxPl = Number(u.max_placements) || 1;
     t.tier = Math.min(t.tier, maxTier); t.placements = Math.min(t.placements, maxPl);
     const b = { ...t.build, tier: String(t.tier) };
-    const per = slotDPS(t, f, mix), st = stats(b, {});
+    const attacking = !CHART_EXCLUDED_UNITS.has(t.build.unit);
+    const per = attacking ? slotDPS(t, tf, null) : 0, st = stats(b, {});
     const dps = per * t.placements, mana = st.cost * t.placements;
     totDps += dps; totMana += mana; totPl += t.placements;
     const g = t.build;
-    const gear = [icon('weapons', g.weapon), icon('armors', g.helmet), icon('armors', g.chest), icon('armors', g.boots),
-                  ...g.acc.map((a) => icon('accessories', a))].join('');
-    return `<div class="slot">
-      <div class="name">${icon('units', g.unit, 'ico')}${g.unit} <span class="muted">Lv ${u.can_level === 'no' ? 1 : g.level} · ${g.reforge}</span></div>
-      <div class="gear">${gear}</div>
+    return `<div class="slot reforgeCard towerBackdrop" style="${towerCardStyle(g.unit)}">
+      ${towerCardVisual(g, u.can_level === 'no' ? 1 : g.level)}
       <label>Upgrade ${t.tier}/${maxTier}<input type="range" min="0" max="${maxTier}" value="${t.tier}" data-slot="${i}" data-kind="tier"></label>
       <label>Placements ${t.placements}/${maxPl}<input type="range" min="0" max="${maxPl}" value="${t.placements}" data-slot="${i}" data-kind="placements"></label>
-      <div class="dps">${fmt(dps)} DPS</div>
-      <div class="muted">${fmt(per)} each · ${fmt(mana, 0)} mana</div>
+      <div class="dps">${attacking ? `${fmt(dps)} DPS` : 'Economy / support'}</div>
+      <div class="muted">${attacking ? `${fmt(per)} each · ` : ''}${fmt(mana, 0)} mana</div>
       <div class="btns"><button class="ghost" data-act="edit" data-slot="${i}">Edit</button>
         <button class="ghost" data-act="set" data-slot="${i}">Set from Build</button>
-        <button class="ghost" data-act="clear" data-slot="${i}">Clear</button></div>
+        <button class="danger" data-act="clear" data-slot="${i}">Clear</button></div>
     </div>`;
   });
   $('teamSlots').innerHTML = cards.join('');
   refreshTeamSlotPick();
-  const vs = mix ? `vs ${$('act').value} (${$('diff').value})` : `vs ${$('enemy').value || 'custom enemy'} (DEF ${f.enemy.DEF})`;
   $('teamStats').innerHTML =
-    tile('Team DPS', fmt(totDps), vs, true) +
+    tile('Attacking Team DPS', fmt(totDps), `vs Enemy DEF ${targetDef}`, true) +
     tile('Total mana', fmt(totMana, 0), `${totPl} placements`) +
     tile('DPS / 1k mana', totMana ? fmt(totDps / totMana * 1000, 2) : '—', 'cost efficiency');
 }
@@ -1500,7 +1644,7 @@ function runOptimizer() {
         <td>${fmt(r.dps)}${i === undefined ? '' : ` <span class="${dd > 0.05 ? 'up' : dd < -0.05 ? 'down' : ''}">${dd >= 0 ? '+' : ''}${fmt(dd, 1)}%</span>`}</td>
         <td>${fmt(r.rng, 1)}${i === undefined ? '' : ` <span class="${dr > 0.05 ? 'up' : dr < -0.05 ? 'down' : ''}">${dr >= 0 ? '+' : ''}${fmt(dr, 1)}</span>`}</td>
         <td>${fmt(r.cost, 0)}</td><td>${fmt(r.dps / r.cost * 1000, 2)}</td><td>×${fmt(r.luck ?? 1, 2)}</td>
-        <td>${i === undefined ? '' : `<button data-apply="${i}">Apply</button>`}</td></tr>`;
+        <td>${i === undefined ? '' : `<button class="primary" data-apply="${i}">Apply</button>`}</td></tr>`;
     };
     $('optTable').innerHTML = '<tr><th>#</th><th style="text-align:left">Loadout</th><th>DPS</th><th>RNG</th><th>Mana</th><th>DPS / 1k mana</th><th title="Drop luck on the enemies this unit kills">Luck</th><th></th></tr>' +
       row(cur, 'Now', toBuild(cur.loadout)) +
@@ -1548,12 +1692,24 @@ function wireItemList(inputId, addId, chipsId, getList, setList, storeKey) {
 // extra-DPS-per-mana, up to the Team's targets. Looking ahead over multi-tier upgrades stops it from
 // ignoring a tier that's weak alone but unlocks a strong one.
 function planSteps(f, mix) {
-  const tiersCache = {};
+  const tiersCache = {}, incomeCache = {};
   const dpsAt = (slot, tier) => {
     const k = slot.i + ':' + tier;
-    if (!(k in tiersCache)) tiersCache[k] = slotDPS({ ...slot.t, tier }, f, mix);
+    if (!(k in tiersCache)) tiersCache[k] = ECO_UNITS.includes(slot.t.build.unit) ? 0 : slotDPS({ ...slot.t, tier }, f, mix);
     return tiersCache[k];
   };
+  const incomeAt = (slot, tier) => {
+    const k = slot.i + ':' + tier;
+    if (!(k in incomeCache)) {
+      if (!ECO_UNITS.includes(slot.t.build.unit)) incomeCache[k] = 0;
+      else {
+        const s = stats({ ...slot.t.build, tier: String(tier) }, {});
+        incomeCache[k] = s.DMG / s.SPA;
+      }
+    }
+    return incomeCache[k];
+  };
+  const scoreAt = (slot, tier) => ECO_UNITS.includes(slot.t.build.unit) ? incomeAt(slot, tier) : dpsAt(slot, tier);
   const slots = team.map((t, i) => ({ t, i })).filter(({ t }) => t && D.units[t.build.unit] && t.placements > 0);
   const copies = [];      // { slot, tier } for each placed copy
   const placed = {};      // slot index -> count
@@ -1566,21 +1722,28 @@ function planSteps(f, mix) {
       const placeCost = rows[0].tier_cost * st.placementCostMult;
       // place another copy (it starts at tier 0)
       if ((placed[sl.i] || 0) < sl.t.placements) {
-        const gain = dpsAt(sl, 0);
-        cand({ kind: 'place', sl, cost: placeCost, gain, to: 0 });
+        const dpsGain = dpsAt(sl, 0), manaGain = incomeAt(sl, 0);
+        cand({ kind: 'place', sl, cost: placeCost, dpsGain, manaGain, scoreGain: scoreAt(sl, 0), to: 0 });
       }
-      // upgrade an existing copy by 1..n tiers (pick the best average)
+      // Score with multi-tier look-ahead, but buy only the next tier so every upgrade appears in the plan.
       const c = copies.filter((x) => x.slot === sl.i).sort((a, b) => a.tier - b.tier)[0];
-      if (c) {
-        let cost = 0;
-        for (let to = c.tier + 1; to <= sl.t.tier; to++) {
-          cost += rows[to].tier_cost * st.upgradeCostMult;
-          const gain = dpsAt(sl, to) - dpsAt(sl, c.tier);
-          if (gain > 0) cand({ kind: 'upgrade', sl, copy: c, cost, gain, to });
+      const targetTier = Math.min(Number(sl.t.tier) || 0, rows.length - 1);
+      if (c && c.tier < targetTier) {
+        const next = c.tier + 1;
+        let lookCost = 0, scoreRatio = -Infinity;
+        for (let to = next; to <= targetTier; to++) {
+          lookCost += rows[to].tier_cost * st.upgradeCostMult;
+          scoreRatio = Math.max(scoreRatio, (scoreAt(sl, to) - scoreAt(sl, c.tier)) / lookCost);
         }
+        cand({ kind: 'upgrade', sl, copy: c, cost: rows[next].tier_cost * st.upgradeCostMult,
+          dpsGain: dpsAt(sl, next) - dpsAt(sl, c.tier), manaGain: incomeAt(sl, next) - incomeAt(sl, c.tier),
+          scoreRatio, to: next });
       }
     }
-    function cand(x) { x.ratio = x.gain / x.cost; if (!best || x.ratio > best.ratio) best = x; }
+    function cand(x) {
+      x.ratio = x.scoreRatio ?? (x.scoreGain / x.cost);
+      if (!best || x.ratio > best.ratio || (x.ratio === best.ratio && x.cost < best.cost)) best = x;
+    }
     if (!best) break;
     if (best.kind === 'place') { copies.push({ slot: best.sl.i, tier: 0 }); placed[best.sl.i] = (placed[best.sl.i] || 0) + 1; }
     else best.copy.tier = best.to;
@@ -1594,68 +1757,38 @@ function renderPlan(f) {
   const steps = planSteps(f, mix && mix.length ? mix : null);
   if (!steps.length) {
     $('planStats').innerHTML = '<p class="muted">Add towers to your Team to get a plan.</p>';
-    $('planOrder').innerHTML = ''; $('planWaves').innerHTML = ''; return;
+    $('planOrder').innerHTML = ''; return;
   }
   const start = Number($('planStart').value) || 0;
-  let cum = 0, dps = 0;
+  let cum = 0, dps = 0, manaPerSec = 0;
   const rows = steps.map((x, n) => {
-    cum += x.cost; dps += x.gain;
-    return { ...x, n: n + 1, cum, dps };
+    cum += x.cost; dps += x.dpsGain; manaPerSec += x.manaGain;
+    return { ...x, n: n + 1, cum, dps, manaPerSec };
   });
   const affordable = rows.filter((r) => r.cum <= start);
-  $('planOrder').innerHTML = '<tr><th>#</th><th>Buy</th><th>Mana</th><th>Total spent</th><th>Team DPS</th></tr>' +
-    rows.map((r) => `<tr class="${r.cum <= start ? 'cur' : ''}"><td>${r.n}</td><td class="left">${ico('units', r.sl.t.build.unit)}${r.kind === 'place' ? 'Place' : 'Upgrade'} ${r.sl.t.build.unit}${r.kind === 'upgrade' ? ` → ${r.to}` : ''}</td><td>${fmt(r.cost, 0)}</td><td>${fmt(r.cum, 0)}</td><td>${fmt(r.dps)}</td></tr>`).join('');
+  $('planOrder').innerHTML = '<tr><th>#</th><th>Buy</th><th>Mana</th><th>Total spent</th><th>Team DPS</th><th>Mana/s</th></tr>' +
+    rows.map((r) => `<tr class="${r.cum <= start ? 'cur' : ''}"><td>${r.n}</td><td class="left">${ico('units', r.sl.t.build.unit)}${r.kind === 'place' ? 'Place' : 'Upgrade'} ${r.sl.t.build.unit}${r.kind === 'upgrade' ? ` → ${r.to}` : ''}</td><td>${fmt(r.cost, 0)}</td><td>${fmt(r.cum, 0)}</td><td>${fmt(r.dps)}</td><td>${fmt(r.manaPerSec, 2)}</td></tr>`).join('');
 
-  // ---- income through the act ----
-  let waveRows = '';
-  if (mix && mix.length) {
-    const [biome, , act] = $('act').value.split(' ');
-    const waves = Number(SPAWNS.find((r) => r.biome === biome && String(r.act) === act)?.waves) || 10;
-    const per = { kills: 0, mana: 0 };
-    for (const m of mix) {
-      const e = D.enemies.find((x) => x.name === m.name) || {};
-      const t = TAGS[m.name] || {};
-      const each = (Number(e.mana_reward) || 0) + ($('planKill2').checked ? 2 : 0) + ($('planFly3').checked && t.flying ? 3 : 0);
-      per.kills += m.count; per.mana += m.count * each;
-    }
-    const passive = (Number($('planPassive').value) || 0) * (Number($('planWaveSec').value) || 0);
-    const clear = $('planWave50').checked ? 50 : 0;
-    waveRows = '<tr><th>Wave</th><th>Mana earned so far</th><th>Bought</th><th>Team DPS</th></tr>';
-    for (let w = 0; w <= waves; w++) {
-      const earned = start + per.mana * (w / waves) + (clear + passive) * w;
-      const got = rows.filter((r) => r.cum <= earned);
-      const last = got[got.length - 1];
-      waveRows += `<tr><td>${w === 0 ? 'Start' : `After ${w}`}</td><td>${fmt(earned, 0)}</td><td>${got.length}/${rows.length} buys</td><td>${fmt(last ? last.dps : 0)}</td></tr>`;
-    }
-    const total = start + per.mana + (clear + passive) * waves;
-    const full = rows[rows.length - 1];
-    const doneWave = (() => { for (let w = 0; w <= waves; w++) if (start + per.mana * (w / waves) + (clear + passive) * w >= full.cum) return w; return null; })();
-    $('planStats').innerHTML =
-      tile('Affordable at start', `${affordable.length} buys`, `${fmt(affordable.length ? affordable[affordable.length - 1].dps : 0)} team DPS`, true) +
-      tile('Full Team costs', fmt(full.cum, 0), `${fmt(full.dps)} team DPS`) +
-      tile('Mana from the act', fmt(total, 0), `${fmt(per.mana, 0)} from ${fmt(per.kills, 0)} kills`) +
-      tile('Full Team by', doneWave === null ? 'not this act' : doneWave === 0 ? 'the start' : `wave ${doneWave}`, `${$('act').value} (${$('diff').value})`);
-  } else {
-    $('planStats').innerHTML =
-      tile('Affordable at start', `${affordable.length} buys`, `${fmt(affordable.length ? affordable[affordable.length - 1].dps : 0)} team DPS`, true) +
-      tile('Full Team costs', fmt(rows[rows.length - 1].cum, 0), `${fmt(rows[rows.length - 1].dps)} team DPS`) +
-      tile('Income by wave', '—', 'Pick an act in Act analysis');
-  }
-  $('planWaves').innerHTML = waveRows || '<tr><td class="muted" style="text-align:left">Pick an act to see income wave by wave.</td></tr>';
+  const full = rows[rows.length - 1];
+  $('planStats').innerHTML =
+    tile('Affordable at start', `${affordable.length} buys`, affordable.length
+      ? `${fmt(affordable[affordable.length - 1].dps)} team DPS · ${fmt(affordable[affordable.length - 1].manaPerSec, 2)} mana/s`
+      : '0 team DPS · 0 mana/s', true) +
+    tile('Full Team costs', fmt(full.cum, 0), `${fmt(full.dps)} team DPS · ${fmt(full.manaPerSec, 2)} mana/s`);
 }
 
 // ---------- sidebar navigation: one view at a time ----------
 const VIEWS = [
   { id: 'build', label: 'Build', sections: ['build', 'fight', 'results', 'optCard'], icon: ['weapons', 'Copper Shortsword'] },
-  { id: 'team', label: 'Team', sections: ['teamCard'], icon: ['units', 'Guide'] },
+  { id: 'team', label: 'Team & Defense', sections: ['teamCard'], icon: ['units', 'Guide'] },
   { id: 'compare', label: 'Compare Towers', sections: ['compareCard'], icon: ['consumables', 'Golden Crate'] },
   { id: 'fantasy', label: 'Fantasy Teams', sections: ['fantasyCard'], icon: ['accessories', 'Gold Crown'] },
   { id: 'act', label: 'Act Analysis', sections: ['actCard'], icon: ['enemies', 'Eye of Cthulhu'] },
   { id: 'plan', label: 'Mana Planner', sections: ['planCard'], icon: ['consumables', 'Mana Crystal'] },
-  { id: 'chart', label: 'DPS vs. Enemy Defense', sections: ['chartCard'], icon: ['accessories', 'Shark Tooth Necklace'] },
   { id: 'acct', label: 'Account Buffs', sections: ['acctCard', 'bannerCard'], icon: ['consumables', 'Seafood Dinner'] },
   { id: 'ach', label: 'Achievements', sections: ['achCard'], icon: ['accessories', 'Platinum Crown'] },
 ];
+let activeViewId = null;
 function buildNav() {
   const nav = document.createElement('nav'); nav.id = 'side';
   nav.innerHTML = VIEWS.map((v) => {
@@ -1669,11 +1802,23 @@ function buildNav() {
 }
 function showView(id) {
   if (id === 'rank') id = 'compare';   // Towers Ranked became Compare Towers
+  if (id === 'chart') id = 'team';     // Defense chart is now part of Team & Defense
   const v = VIEWS.find((x) => x.id === id) || VIEWS[0];
+  const changed = activeViewId !== v.id;
+  activeViewId = v.id;
   for (const x of VIEWS) for (const sid of x.sections) { const el = $(sid); if (el) el.hidden = x !== v; }
+  if (changed) {
+    const visible = v.sections.map((sid) => $(sid)).filter(Boolean);
+    visible.forEach((el) => el.classList.remove('viewEntering'));
+    requestAnimationFrame(() => visible.forEach((el, i) => {
+      el.style.setProperty('--enter-delay', `${i * 22}ms`);
+      el.classList.add('viewEntering');
+      el.addEventListener('animationend', () => el.classList.remove('viewEntering'), { once: true });
+    }));
+  }
   document.querySelectorAll('#side button').forEach((b) => b.classList.toggle('on', b.dataset.view === v.id));
   store.set('ttd.view', v.id);
-  if (v.id === 'chart' && appReady) render();   // not during start-up: the Build panel isn't filled in yet
+  if (v.id === 'team' && appReady) render();   // size the chart after its combined view becomes visible
   if (v.id === 'compare' && appReady && !cmpRows) runCompare();   // fill the table on first open
   window.scrollTo({ top: 0 });
 }
