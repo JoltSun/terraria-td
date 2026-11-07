@@ -234,6 +234,8 @@ async function init() {
     store.set('ttd.fxCrowd', { mode: $('fxTargetMode').value, clump: Number($('fxTargets').value) || 8 });
   };
   $('fxTargetMode').addEventListener('change', fxTargetsVis); $('fxTargets').addEventListener('change', fxTargetsVis); fxTargetsVis();
+  $('fxDef').value = store.get('ttd.fxDef', 0);
+  $('fxDef').addEventListener('change', () => store.set('ttd.fxDef', Math.max(0, Number($('fxDef').value) || 0)));
   // whip: an account-wide setting (Account Buffs view), saved across reloads
   const savedWhip = store.get('ttd.whip', '0');
   if ([...$('whip').options].some((o) => o.value === savedWhip)) $('whip').value = savedWhip;
@@ -777,12 +779,15 @@ function fxCrowd() {
   return { mode: m, density: FX_DENSITY[m], clump: Math.max(2, Math.min(40, Math.round(Number($('fxTargets').value) || 8))) };
 }
 function fxContext() {
-  const f = fightOpts(), mix = actMix();
+  // Fantasy Teams has its own enemy DEF: it doesn't follow Act Analysis or the Build panel's enemy
+  const f = fightOpts();
+  const def = Math.max(0, Number($('fxDef').value) || 0);
+  f.enemy = { ...f.enemy, DEF: def };
   const crowd = fxCrowd();
   // single-target → chains get only their first hit; crowd → chains can reach up to the clump size
   f.opts = { ...f.opts, targets: 1, chainTargets: crowd ? crowd.clump : 1, ...(crowd ? { density: crowd.density, clump: crowd.clump } : {}) };
-  const dps = (b) => (mix && mix.length ? actDPS(b, mix, f) : realDPS(stats(b, f.fight), f.enemy, f.opts));
-  const vs = (mix && mix.length ? `${$('act').value} (${$('diff').value})` : `${$('enemy').value || 'custom enemy'} (DEF ${f.enemy.DEF})`) +
+  const dps = (b) => realDPS(stats(b, f.fight), f.enemy, f.opts);
+  const vs = `avg enemy DEF ${def}` +
              (crowd ? ` · ${crowd.mode} crowd (clumps ≤ ${crowd.clump})` : ' · single-target');
   const key = JSON.stringify([vs, f, account]);
   return { dps, vs, key };
