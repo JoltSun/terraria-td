@@ -218,13 +218,7 @@ async function init() {
     store.set('ttd.cmpSort', cmpSort); renderCompare();
   });
   $('fxRealistic').checked = store.get('ttd.fxRealistic', false);
-  const fxRareVis = () => {
-    store.set('ttd.fxRealistic', $('fxRealistic').checked);
-    $('fxRareList').hidden = !$('fxRealistic').checked;
-    const lim = limitedItems().filter((n) => !ACCOUNT_UNIQUE.includes(n));
-    $('fxRareList').textContent = `Limited copies: ${lim.map((n) => `${n} ×${copyLimit(n)}`).join(', ')}` +
-      ` — plus one per account (×1, always): ${ACCOUNT_UNIQUE.join(', ')}.`;
-  };
+  const fxRareVis = () => store.set('ttd.fxRealistic', $('fxRealistic').checked);
   $('fxRealistic').addEventListener('change', fxRareVis); fxRareVis();
   const tsaved = store.get('ttd.fxCrowd', { mode: 'single', clump: 8 });
   $('fxTargetMode').value = FX_DENSITY[tsaved.mode] || tsaved.mode === 'single' ? tsaved.mode : 'single';

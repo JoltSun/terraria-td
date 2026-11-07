@@ -198,9 +198,7 @@
   <!-- ============ FANTASY TEAMS ============ -->
   <section class="card wide" id="fantasyCard">
     <h2>Fantasy Teams</h2>
-    <p class="muted">The best 5-tower teams if you owned every unit and item. Item copies are allowed across towers (two towers can both wear Ice Skates),
-      so every tower gets its own best gear. Damage is against the act picked in Act Analysis, or the enemy in Enemy Select if no act is picked.
-      Uses your Account Buffs and Achievements, Level 45, and the best reforge for each tower.</p>
+    <p class="muted">A fantasy 5-tower builder, as if you owned every unit and item in the game. Uses your Account Buffs and Achievements, and assumes Level 45 and the best reforge.</p>
     <div class="grid3">
       <label>Goal
         <select id="fxMode">
@@ -229,11 +227,10 @@
       <label>&nbsp;<button id="fxRun" class="primary">Build fantasy team</button></label>
     </div>
     <label class="fxRealisticRow" title="Treat ultra-rare items (no repeatable source: sub-1% drops, one-time rewards, extremely rare fishing) as one copy, so only one tower can wear each.">
-      <input type="checkbox" id="fxRealistic"> Realistic rarity <span class="muted">(ultra-rare items get limited copies: Arkhalis ×1, Balloon Pufferfish ×3)</span>
+      <input type="checkbox" id="fxRealistic"> Realistic rarity
     </label>
-    <p id="fxRareList" class="muted" hidden></p>
     <div class="fxRoles">
-      <div class="muted">Slot roles — optional range band per slot (e.g. one 40+ sniper, two 15–25 midrange). A blank slot uses the default band.</div>
+      <div class="muted">Slot roles: optional range band per slot (e.g., one 40+ sniper, two 15–25 midrange). A blank slot has no RNG floor unless you set a default band.</div>
       <div id="fxRoleRows" class="fxRoleGrid"></div>
     </div>
     <div class="grid3" style="margin-top:10px">
@@ -248,9 +245,7 @@
     <div id="fxStats" class="stats"></div>
     <div id="fxSlots" class="teamSlots"></div>
     <div class="row" id="fxLoadRow" hidden><button id="fxLoad" class="primary">Load into my Team</button></div>
-    <p class="muted"><b>Underrated:</b> burn/frostburn ticks, ricochet, knockback, and stun aren't modeled, so towers that lean on them rank lower than they should.
-      Gear is searched at each tower's max tier and reused at lower tiers. Each unit appears at most once per team (use placements for copies).
-      Re-gear on a card re-optimizes only that tower (the others keep their one-copy items) and keeps its placements.</p>
+    <p class="muted"><b>Underrated:</b> burn/frostburn ticks, ricochet, knockback, and stuns. The model doesn't account for these!</p>
   </section>
 
   <!-- ============ ACCOUNT ============ -->
