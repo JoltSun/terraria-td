@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { computeStats, screenDPS, trunc1, trunc2, DEFAULT_ACCOUNT } from '../calc.js';
+import { computeStats, screenDPS, damagePerAttack, trunc1, trunc2, DEFAULT_ACCOUNT } from '../calc.js';
 import { parseCSV, indexData } from '../data.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -100,6 +100,43 @@ const vf = ['Ice Blade', 'Viking Helmet', 'Flinx Fur Coat', 'Boreal Wood Greaves
 
 // Zoologist — RNG-reducing gear cannot push the reverse-path summon below the in-game floor.
 check('Zoologist minimum RNG', build('Zoologist', 3, ['Mandible Blade', 'Ice Skates']).RNG, 1);
+
+// ---------- damagePerAttack: real damage after defense, chains, splash, pellets, crits ----------
+// Synthetic stat blocks (not game data) so each rule is isolated.
+const base = { DMG: 100, SPA: 1, pellets: 1, chains: 1, preserve: 0, Splash: 0, Globe: 0, RNG: 10,
+               Pen: 0, ignoreDef: 0, defMult: 1, floor: 1, critChance: 0, critMult: 2, percent: 0 };
+const dpa = (over, enemy = {}, opts = {}) => damagePerAttack({ ...base, ...over }, { DEF: 0, maxHP: 0, ...enemy }, opts);
+
+// defense
+check('DEF subtracts flat', dpa({}, { DEF: 30 }), 70);
+check('DEF floors at 1', dpa({}, { DEF: 500 }), 1);
+check('Penetration reduces DEF', dpa({ Pen: 10 }, { DEF: 30 }), 80);
+// crits: expected value
+check('50% crit, x2 → 150', dpa({ critChance: 0.5 }), 150);
+check('Bad Luck adds crit chance', dpa({ critChance: 0.5 }, {}, { badLuck: 0.5 }), 200);
+// chains (Max Chain 4, Preserve 50%): capped by distinct enemies, never revisits one
+const ch = { chains: 4, preserve: 0.5 };
+check('Chain, 1 enemy → first hit only', dpa(ch, {}, { targets: 1 }), 100);
+check('Chain, 2 enemies → 2 hits', dpa(ch, {}, { targets: 2 }), 150);
+check('Chain, 3 enemies → 3 hits', dpa(ch, {}, { targets: 3 }), 175);
+check('Chain, 10 enemies → Max Chain', dpa(ch, {}, { targets: 10 }), 187.5);
+check('Chain default (no opts) → 1 hit', dpa(ch), 100);
+check('Chain, explicit chainTargets wins', dpa(ch, {}, { targets: 1, chainTargets: 3 }), 175);
+check('Chain applies DEF per hit', dpa(ch, { DEF: 20 }, { targets: 3 }), 80 + 30 + 5);
+// pellets: listed DMG assumes all land; DEF per pellet
+check('Pellets, all 3 land', dpa({ pellets: 3 }, {}, { pelletsHit: 3 }), 100);
+check('Pellets, 1 of 3 lands', dpa({ pellets: 3 }, {}, { pelletsHit: 1 }), 100 / 3);
+check('Pellets, DEF per pellet', dpa({ pellets: 4 }, { DEF: 10 }, { pelletsHit: 4 }), 60);
+// splash: manual count, ordinary towers ignore it, calibrated densities
+check('Ordinary tower ignores enemy count', dpa({}, {}, { targets: 5 }), 100);
+check('Splash, manual 3 targets', dpa({ Splash: 2 }, {}, { targets: 3 }), 300);
+check('Splash 4, medium density 0.375 → 3', dpa({ Splash: 4 }, {}, { density: 0.375 }), 300);
+check('Splash 8, medium density → 6', dpa({ Splash: 8 }, {}, { density: 0.375 }), 600);
+check('Splash 2, light density → floor 1', dpa({ Splash: 2 }, {}, { density: 0.18 }), 100);
+check('Splash capped by clump', dpa({ Splash: 8 }, {}, { density: 0.375, clump: 4 }), 400);
+check('Spawn camping, Splash 2 → 3.5', dpa({ Splash: 2 }, {}, { spawnCrowd: true }), 350);
+// % max-HP damage: ignores DEF, capped at 100
+check('% max-HP adds, capped 100', dpa({ percent: 10 }, { maxHP: 5000 }), 200);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

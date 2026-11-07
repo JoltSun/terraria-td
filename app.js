@@ -134,7 +134,8 @@ function towerCardVisual(g, level) {
     </div>
   </div>`;
 }
-const towerCardStyle = (unit) => `--tower-card-bg:url('${encodeURI(TOWER_CARD_BACKGROUNDS[unit])}')`;
+// units missing from TOWER_CARD_BACKGROUNDS get no backdrop (plain panel) instead of url('undefined')
+const towerCardStyle = (unit) => (TOWER_CARD_BACKGROUNDS[unit] ? `--tower-card-bg:url('${encodeURI(TOWER_CARD_BACKGROUNDS[unit])}')` : '');
 
 function updateReforgeShowcase(name = $('reforge').value || 'None') {
   const img = $('reforgePreview');
