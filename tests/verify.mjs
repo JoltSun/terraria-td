@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { computeStats, screenDPS, damagePerAttack, trunc1, trunc2, DEFAULT_ACCOUNT } from '../calc.js';
 import { parseCSV, indexData } from '../data.js';
+import { fxAssign, paretoOptions, bandKey } from '../fantasy-core.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const load = (f) => parseCSV(readFileSync(join(root, 'data', f), 'utf8'));
@@ -137,6 +138,56 @@ check('Splash capped by clump', dpa({ Splash: 8 }, {}, { density: 0.375, clump: 
 check('Spawn camping, Splash 2 → 3.5', dpa({ Splash: 2 }, {}, { spawnCrowd: true }), 350);
 // % max-HP damage: ignores DEF, capped at 100
 check('% max-HP adds, capped 100', dpa({ percent: 10 }, { maxHP: 5000 }), 200);
+
+// ---------- Fantasy Team brain: fxAssign (DP over filled slots × mana budget) ----------
+// synthetic towers: opt(dps, cost) is one tier/placement choice
+const opt = (dps, cost, extra = {}) => ({ dps, each: dps, cost, placements: 1, rng: 10, tier: 0, ...extra });
+const cand = (unit, byBandOpts) => ({ unit, byBand: Object.fromEntries(Object.entries(byBandOpts)
+  .map(([k, options]) => [k, { b: { unit }, options }])) });
+const ANY = [null, null];                        // two slots, any range
+const team = (out) => out.map((x) => x?.c.b.unit ?? null);
+const total = (out, k) => out.reduce((t, x) => t + (x ? x.o[k] : 0), 0);
+
+// distinct units: the best tower can only fill ONE slot
+{
+  const out = fxAssign([cand('Ace', { none: [opt(500, 100)] }), cand('Bee', { none: [opt(200, 100)] })], ANY, 'dps', 0);
+  check('fxAssign: no unit used twice', new Set(team(out)).size, 2);
+  check('fxAssign: both slots filled', team(out).filter(Boolean).length, 2);
+}
+// picks the best combination, not greedily the best single tower
+{
+  const out = fxAssign([cand('A', { none: [opt(300, 100)] }), cand('B', { none: [opt(250, 100)] }),
+                        cand('C', { none: [opt(100, 100)] })], ANY, 'dps', 0);
+  check('fxAssign: best two of three (total DPS)', total(out, 'dps'), 550);
+}
+// mana budget binds: the expensive star loses to two cheaper towers that fit
+{
+  // Star+Mid would be 1100 DPS but costs 1200 > 1000; Star alone (700) < Mid+Mid (800)
+  const cands = [cand('Star', { none: [opt(700, 800)] }), cand('Mid1', { none: [opt(400, 400)] }),
+                 cand('Mid2', { none: [opt(400, 400)] })];
+  const out = fxAssign(cands, ANY, 'dps', 1000);
+  check('fxAssign: total cost within budget', total(out, 'cost') <= 1000 ? 1 : 0, 1);
+  check('fxAssign: best DPS under budget', total(out, 'dps'), 800);
+  // 3 slots: with spare slots an over-budget pick could alias into a valid DP cell, so the guard must hold
+  const out3 = fxAssign(cands, [null, null, null], 'dps', 1000);
+  check('fxAssign: budget holds with spare slots (cost)', total(out3, 'cost') <= 1000 ? 1 : 0, 1);
+  check('fxAssign: budget holds with spare slots (DPS)', total(out3, 'dps'), 800);
+  check('fxAssign: budget 0 = unlimited', total(fxAssign(cands, ANY, 'dps', 0), 'dps'), 1100);
+}
+// range bands: a tower with no option for a band can't fill that slot
+{
+  const bands = [[0, 10], [20, null]];
+  const out = fxAssign([cand('Short', { [bandKey([0, 10])]: [opt(300, 100)] })], bands, 'dps', 0);
+  check('fxAssign: tower fills only its band', team(out)[0] === 'Short' && team(out)[1] === null ? 1 : 0, 1);
+}
+// efficiency mode ignores the budget and only considers single placements
+{
+  const out = fxAssign([cand('E', { none: [opt(100, 10), opt(400, 400, { placements: 3 })] })], [null], 'efficiency', 50);
+  check('fxAssign: efficiency uses 1-placement option', out[0].o.placements, 1);
+}
+// paretoOptions keeps only options that beat every cheaper one
+check('paretoOptions: drops dominated', paretoOptions([opt(100, 50), opt(90, 80), opt(200, 120)]).length, 2);
+check('bandKey: null band', bandKey(null) === 'none' ? 1 : 0, 1);
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
