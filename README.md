@@ -2,7 +2,7 @@
 
 🌐 **Live site: [terrariatd.wiki](https://terrariatd.wiki)** · *It's currently a work in progress!*
 
-(AI-generated slop project lmao)
+AI Use? Oh absolutely lol
 
 > Unofficial fan project by **JoltSun**. Not affiliated with Re-Logic or the Terraria Tower Defense developers.
 > Game data comes from [Terraria TD Remastered Trello board](https://trello.com/b/p9kIzWV6/terraria-td-remastered);
