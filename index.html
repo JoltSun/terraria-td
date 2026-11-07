@@ -209,9 +209,6 @@
           <option value="luck" title="Luck only boosts drops from enemies the lucky tower kills: scored as Luck × DPS">Most Luck</option>
         </select>
       </label>
-      <label id="fxBandRow">Default range band (attacking towers, blank = ignore)
-        <span class="row"><input id="fxRngMin" type="number" min="0" placeholder="min" style="width:5em"> to <input id="fxRngMax" type="number" min="0" placeholder="max" style="width:5em"></span>
-      </label>
       <label title="How many enemies a splash or globe hit catches, from its radius: 1 + density × 2 × radius, up to the clump size. Towers without AoE always hit one enemy.">Crowd (for splash)
         <span class="row fxTargetsRow">
           <select id="fxTargetMode">
@@ -230,7 +227,7 @@
       <input type="checkbox" id="fxRealistic"> Realistic rarity
     </label>
     <div class="fxRoles">
-      <div class="muted">Slot roles: optional range band per slot (e.g., one 40+ sniper, two 15–25 midrange). A blank slot has no RNG floor unless you set a default band.</div>
+      <div class="muted">Slot roles: optional range band per slot (e.g., one 40+ sniper, two 15–25 midrange). A blank slot has no RNG floor.</div>
       <div id="fxRoleRows" class="fxRoleGrid"></div>
     </div>
     <div class="grid3" style="margin-top:10px">

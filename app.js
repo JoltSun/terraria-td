@@ -798,13 +798,6 @@ const FX_SCORE = { control: (r) => r.control * 1e6 + r.dps, dps: (r) => r.dps, e
 const INVERTED_RANGE_UNITS = new Set(['Zoologist']);   // summons travel from the map exit toward the entrance
 // Range band (set by hand, applies to every goal; economy towers are exempt since they don't attack).
 // Both boxes blank = ignore range (null); one blank side = open-ended.
-function fxBand() {
-  const read = (id) => ($(id).value.trim() === '' ? null : Number($(id).value));
-  let lo = read('fxRngMin'), hi = read('fxRngMax');
-  if (lo === null && hi === null) return null;
-  lo ??= 0; hi ??= Infinity;
-  return [Math.min(lo, hi), Math.max(lo, hi)];
-}
 const bandText = ([lo, hi]) => (hi === Infinity ? `${lo}+` : `${lo}–${hi}`);
 const bandDist = (rng, [lo, hi]) => (rng < lo ? lo - rng : rng > hi ? rng - hi : 0);
 function fxBestBuild(unit, mode, ctx, forbid = []) {
@@ -920,10 +913,10 @@ function renderRoleRows() {
   }).join('');
 }
 function slotBands() {
-  const def = fxBand(), roles = [];
+  const roles = [];   // a blank slot (or the Eco slot) has no range band
   for (let i = 0; i < FX_SLOTS; i++) {
     const mn = document.querySelector(`[data-role="${i}"][data-side="min"]`), mx = document.querySelector(`[data-role="${i}"][data-side="max"]`);
-    roles.push(mn && mx ? (readBand(mn, mx) ?? def) : def);
+    roles.push(mn && mx ? readBand(mn, mx) : null);
   }
   return roles;
 }
